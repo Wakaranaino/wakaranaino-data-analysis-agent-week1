@@ -78,11 +78,14 @@ Execution error:
 
 Fix the code so it runs correctly.
 
-STRICT RULES:
-- Output ONLY Python code
-- No markdown
-- No explanation
-- No extra text
+IMPORTANT:
+- If a column name does not exist, replace it with the closest valid column name.
+- Do not keep invalid column names from the user request.
+- For yfinance stock data, common columns include: Open, High, Low, Close, Adj Close, Volume.
+- Return ONLY corrected executable Python code.
+- No markdown.
+- No explanation.
+- No extra text.
 """
 
     data = {
