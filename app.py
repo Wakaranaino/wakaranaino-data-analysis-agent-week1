@@ -125,7 +125,7 @@ def run_agent(prompt):
             execution_output = "Plot generated successfully."
 
     except Exception as e:
-    error_message = str(e)
+        error_message = str(e)
 
     try:
         # attempt repair
@@ -151,7 +151,7 @@ def run_agent(prompt):
         elif not execution_output.strip():
             execution_output = "Plot generated after fixing code."
 
-        code = fixed_code  # show fixed version in UI
+        code = fixed_code  # show fixed code
 
     except Exception as e2:
         execution_output = f"Execution error (after retry): {str(e2)}"
