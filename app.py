@@ -38,6 +38,7 @@ STRICT RULES:
 - Print numerical/text results clearly
 - For plots, use matplotlib
 - It is OK to call plt.show()
+- Always print results in clean human-readable format (no pandas dtype output)
 
 Use only these libraries when needed:
 pandas, matplotlib, yfinance
@@ -83,6 +84,7 @@ IMPORTANT:
 - Do not keep invalid column names from the user request.
 - For yfinance stock data, common columns include: Open, High, Low, Close, Adj Close, Volume.
 - Return ONLY corrected executable Python code.
+- Always print results in clean human-readable format (no pandas dtype output)
 - No markdown.
 - No explanation.
 - No extra text.
