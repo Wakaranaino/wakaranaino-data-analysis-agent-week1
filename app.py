@@ -103,6 +103,52 @@ IMPORTANT:
 
     return extract_python_code(result["choices"][0]["message"]["content"])
 
+def interpret_result(prompt, code, execution_output, status):
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    interpretation_prompt = f"""
+You are a data analysis assistant.
+
+User request:
+{prompt}
+
+Generated Python code:
+{code}
+
+Execution output:
+{execution_output}
+
+Run status:
+{status}
+
+Write a short plain-English interpretation for the user.
+
+RULES:
+- Be concise
+- If the code was fixed on retry, explicitly mention that the original code failed and was corrected
+- If a column name was corrected, mention that clearly
+- Explain the result in natural language
+- Do not mention internal APIs or technical implementation details
+"""
+
+    data = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": "You explain data analysis results clearly and briefly."},
+            {"role": "user", "content": interpretation_prompt}
+        ]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    result = response.json()
+
+    return result["choices"][0]["message"]["content"]
+
 def run_agent(prompt):
     raw_code = generate_code(prompt)
     code = extract_python_code(raw_code)
@@ -132,7 +178,7 @@ def run_agent(prompt):
 
         except Exception as e2:
             plt.close("all")
-            return code, f"Execution error (after retry): {str(e2)}", "Retry failed", None
+            return code, f"Execution error (after retry): {str(e2)}", "Retry failed", "The app attempted to fix the code automatically, but the repaired version still failed.", None
 
     if plt.get_fignums():
         buf = io.BytesIO()
@@ -147,7 +193,9 @@ def run_agent(prompt):
     elif not execution_output.strip():
         execution_output = "Plot generated successfully."
 
-    return code, execution_output, status, img
+    interpretation = interpret_result(prompt, code, execution_output, status)
+
+    return code, execution_output, status, interpretation, img
 
 demo = gr.Interface(
     fn=run_agent,
@@ -156,6 +204,7 @@ demo = gr.Interface(
     gr.Code(label="Generated Python Code", language="python"),
     gr.Textbox(label="Execution Output", lines=12),
     gr.Textbox(label="Run Status"),
+    gr.Textbox(label="Interpretation", lines=6),
     gr.Image(label="Plot Output")
     ],
     title="AI Data Analysis Agent"
