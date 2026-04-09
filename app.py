@@ -13,15 +13,20 @@ def call_llm(prompt):
     }
 
     system_prompt = """
-You are a Python data analysis assistant.
+You are a Python code generator.
 
-ONLY return Python code.
-Do NOT explain anything.
-Do NOT include markdown.
-Do NOT include text outside code.
+STRICT RULES:
+- Output ONLY raw Python code
+- No explanations
+- No markdown
+- No text
+- No comments outside code
+- No instructions
+- Do NOT say anything before or after the code
+
+If you break these rules, the output is invalid.
 
 Use pandas, matplotlib, yfinance if needed.
-Print results clearly.
 """
 
     data = {
