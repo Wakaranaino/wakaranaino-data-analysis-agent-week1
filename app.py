@@ -48,6 +48,10 @@ STRICT RULES:
 - For plots, use matplotlib and call plt.show()
 - If formatting a value with f-strings (e.g. :.2f), make sure the value is a scalar, not a pandas Series
 - Convert Series results to scalar before formatting when needed (e.g. .item(), float(), or selecting one value)
+- Interpret the user's intended meaning, not just the exact field wording
+- If a requested field name does not exactly exist, map it to the closest valid field based on available columns and context
+- Do not preserve invalid or misspelled field names just for consistency with the user's wording
+- If no timeframe is specified, default to a recent period instead of inventing arbitrary historical dates
 
 Use only these libraries when needed:
 pandas, matplotlib, yfinance
@@ -104,6 +108,10 @@ RULES:
 - If formatting a value with f-strings (e.g. :.2f), make sure the value is a scalar, not a pandas Series
 - Convert Series results to scalar before formatting when needed (e.g. .item(), float(), or selecting one value)
 - If the error mentions Series.__format__, convert the Series to a scalar before formatting
+- Use the execution error and available data structure to infer the user's intended meaning
+- If a requested field name is invalid, replace it with the closest valid field based on meaning, not literal wording
+- Do not preserve broken or misspelled names for consistency with the original request
+- If no timeframe was specified, prefer a recent default period rather than arbitrary hard-coded dates
 """
 
     data = {
@@ -142,14 +150,25 @@ Execution output:
 Run status:
 {status}
 
-Write a short plain-English interpretation for the user.
+Write a clear, concise interpretation for the user.
 
 RULES:
-- Be concise
-- If the code was fixed on retry, explicitly mention that the original code failed and was corrected
-- If a column name was corrected, mention that clearly
-- Explain the result in natural language
-- Do not mention internal APIs or technical implementation details
+- Start with the final result and what it means (this is the main focus)
+- If applicable, briefly explain what data was used (e.g., which column or metric)
+- If user wording was mapped to a different actual column, clearly state the mapping:
+  Example: "Interpreted 'closingprice' as 'Close'"
+- Keep explanations short and natural (2–4 sentences total)
+
+- If the code required fixing:
+  - Mention it briefly at the END as a short note
+  - Do NOT start with the error
+  - Do NOT over-explain the debugging process
+
+- If the run failed completely:
+  - Explain the reason clearly and what likely caused it
+
+- Do NOT mention internal APIs, retries, or system mechanics
+- Do NOT repeat raw outputs verbatim
 """
 
     data = {
