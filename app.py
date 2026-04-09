@@ -164,33 +164,44 @@ def run_agent(prompt):
     raw_code = generate_code(prompt)
     code = extract_python_code(raw_code)
 
-    output_buffer = io.StringIO()
-    img = None
-    status = "Executed on first try"
+    max_attempts = 3  # 1 original + 2 retries
+    attempt = 0
+    last_error = None
 
-    try:
-        with contextlib.redirect_stdout(output_buffer):
-            exec(code, {})
-
-    except Exception as e:
-        error_message = str(e)
-        status = "Fixed and executed on retry"
+    while attempt < max_attempts:
+        output_buffer = io.StringIO()
+        img = None
 
         try:
-            fixed_code = repair_code(prompt, code, error_message)
-
-            output_buffer = io.StringIO()
-            img = None
-
             with contextlib.redirect_stdout(output_buffer):
-                exec(fixed_code, {})
+                exec(code, {"__builtins__": __builtins__})
 
-            code = fixed_code
+            # success
+            if attempt == 0:
+                status = "Executed on first try"
+            else:
+                status = f"Fixed and executed on retry (attempt {attempt})"
 
-        except Exception as e2:
-            plt.close("all")
-            return code, f"Execution error (after retry): {str(e2)}", "Retry failed", "The app attempted to fix the code automatically, but the repaired version still failed.", None
+            break
 
+        except Exception as e:
+            last_error = str(e)
+            attempt += 1
+
+            if attempt >= max_attempts:
+                plt.close("all")
+                return (
+                    code,
+                    f"Execution error (after {attempt-1} retries): {last_error}",
+                    "Retry failed",
+                    f"The system attempted to fix the code multiple times but failed. Final error: {last_error}",
+                    None
+                )
+
+            # generate repaired code
+            code = repair_code(prompt, code, last_error)
+
+    # capture plot
     if plt.get_fignums():
         buf = io.BytesIO()
         plt.savefig(buf, format="png", bbox_inches="tight")
@@ -199,6 +210,7 @@ def run_agent(prompt):
         plt.close("all")
 
     execution_output = output_buffer.getvalue()
+
     if not execution_output.strip() and img is None:
         execution_output = "Code executed successfully, but nothing was printed."
     elif not execution_output.strip():
