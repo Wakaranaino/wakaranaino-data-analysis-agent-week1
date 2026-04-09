@@ -106,56 +106,43 @@ def run_agent(prompt):
     img = None
 
     try:
+        # First attempt
         with contextlib.redirect_stdout(output_buffer):
             exec(code, {})
-
-        # capture plot first
-        if plt.get_fignums():
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", bbox_inches="tight")
-            buf.seek(0)
-            img = Image.open(buf)
-            plt.close("all")
-
-        # then decide text output
-        execution_output = output_buffer.getvalue()
-        if not execution_output.strip() and img is None:
-            execution_output = "Code executed successfully, but nothing was printed."
-        elif not execution_output.strip():
-            execution_output = "Plot generated successfully."
 
     except Exception as e:
         error_message = str(e)
 
-    try:
-        # attempt repair
-        fixed_code = repair_code(prompt, code, error_message)
+        try:
+            # Retry with repaired code
+            fixed_code = repair_code(prompt, code, error_message)
 
-        output_buffer = io.StringIO()
-        img = None
+            output_buffer = io.StringIO()
+            img = None
 
-        with contextlib.redirect_stdout(output_buffer):
-            exec(fixed_code, {})
+            with contextlib.redirect_stdout(output_buffer):
+                exec(fixed_code, {})
 
-        # capture plot
-        if plt.get_fignums():
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", bbox_inches="tight")
-            buf.seek(0)
-            img = Image.open(buf)
+            code = fixed_code  # show repaired code in UI
+
+        except Exception as e2:
             plt.close("all")
+            return code, f"Execution error (after retry): {str(e2)}", None
 
-        execution_output = output_buffer.getvalue()
-        if not execution_output.strip() and img is None:
-            execution_output = "Code fixed and executed, but nothing was printed."
-        elif not execution_output.strip():
-            execution_output = "Plot generated after fixing code."
-
-        code = fixed_code  # show fixed code
-
-    except Exception as e2:
-        execution_output = f"Execution error (after retry): {str(e2)}"
+    # Capture plot after successful execution
+    if plt.get_fignums():
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", bbox_inches="tight")
+        buf.seek(0)
+        img = Image.open(buf)
         plt.close("all")
+
+    # Prepare execution output message
+    execution_output = output_buffer.getvalue()
+    if not execution_output.strip() and img is None:
+        execution_output = "Code executed successfully, but nothing was printed."
+    elif not execution_output.strip():
+        execution_output = "Plot generated successfully."
 
     return code, execution_output, img
 
