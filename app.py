@@ -67,18 +67,20 @@ def run_agent(prompt):
         with contextlib.redirect_stdout(output_buffer):
             exec(code, {})
 
-        execution_output = output_buffer.getvalue()
-        if not execution_output.strip() and img is None:
-            execution_output = "Code executed successfully, but nothing was printed."
-        elif not execution_output.strip():
-            execution_output = "Plot generated successfully."
-
+        # capture plot first
         if plt.get_fignums():
             buf = io.BytesIO()
             plt.savefig(buf, format="png", bbox_inches="tight")
             buf.seek(0)
             img = Image.open(buf)
             plt.close("all")
+
+        # then decide text output
+        execution_output = output_buffer.getvalue()
+        if not execution_output.strip() and img is None:
+            execution_output = "Code executed successfully, but nothing was printed."
+        elif not execution_output.strip():
+            execution_output = "Plot generated successfully."
 
     except Exception as e:
         execution_output = f"Execution error: {str(e)}"
