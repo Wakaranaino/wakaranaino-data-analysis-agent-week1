@@ -104,17 +104,17 @@ def run_agent(prompt):
 
     output_buffer = io.StringIO()
     img = None
+    status = "Executed on first try"
 
     try:
-        # First attempt
         with contextlib.redirect_stdout(output_buffer):
             exec(code, {})
 
     except Exception as e:
         error_message = str(e)
+        status = "Fixed and executed on retry"
 
         try:
-            # Retry with repaired code
             fixed_code = repair_code(prompt, code, error_message)
 
             output_buffer = io.StringIO()
@@ -123,13 +123,12 @@ def run_agent(prompt):
             with contextlib.redirect_stdout(output_buffer):
                 exec(fixed_code, {})
 
-            code = fixed_code  # show repaired code in UI
+            code = fixed_code
 
         except Exception as e2:
             plt.close("all")
-            return code, f"Execution error (after retry): {str(e2)}", None
+            return code, f"Execution error (after retry): {str(e2)}", "Retry failed", None
 
-    # Capture plot after successful execution
     if plt.get_fignums():
         buf = io.BytesIO()
         plt.savefig(buf, format="png", bbox_inches="tight")
@@ -137,22 +136,22 @@ def run_agent(prompt):
         img = Image.open(buf)
         plt.close("all")
 
-    # Prepare execution output message
     execution_output = output_buffer.getvalue()
     if not execution_output.strip() and img is None:
         execution_output = "Code executed successfully, but nothing was printed."
     elif not execution_output.strip():
         execution_output = "Plot generated successfully."
 
-    return code, execution_output, img
+    return code, execution_output, status, img
 
 demo = gr.Interface(
     fn=run_agent,
     inputs=gr.Textbox(label="Prompt", lines=2),
     outputs=[
-        gr.Code(label="Generated Python Code", language="python"),
-        gr.Textbox(label="Execution Output", lines=12),
-        gr.Image(label="Plot Output")
+    gr.Code(label="Generated Python Code", language="python"),
+    gr.Textbox(label="Execution Output", lines=12),
+    gr.Textbox(label="Run Status"),
+    gr.Image(label="Plot Output")
     ],
     title="AI Data Analysis Agent"
 )
