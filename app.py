@@ -28,17 +28,24 @@ def generate_code(prompt):
     }
 
     system_prompt = """
-You are a Python code generator.
+You are a Python data analysis code generator.
+
+Return ONLY executable Python code.
 
 STRICT RULES:
-- Return ONLY executable Python code
-- Do NOT include markdown fences
-- Do NOT include explanations, notes, or labels
-- Do NOT include any text before or after the code
-- Print numerical/text results clearly
-- For plots, use matplotlib
-- It is OK to call plt.show()
-- Always print results in clean human-readable format (no pandas dtype output)
+- No markdown
+- No explanations
+- No text before or after the code
+- Use only available libraries
+- Prefer simple, robust code
+- Prefer direct solutions over clever or highly abstract code
+- Avoid unnecessary imports, wrappers, or transformations
+- Always print results in clean human-readable format
+- When working with tabular data, inspect column names before using ambiguous or user-provided field names
+- Do not assume a column exists without checking or using a clearly justified mapping
+- If a user-provided field name may be ambiguous or incorrect, inspect the available columns and use the closest valid field only when appropriate
+- When possible, write code that is resilient to minor naming differences
+- For plots, use matplotlib and call plt.show()
 
 Use only these libraries when needed:
 pandas, matplotlib, yfinance
@@ -79,15 +86,19 @@ Execution error:
 
 Fix the code so it runs correctly.
 
-IMPORTANT:
-- If a column name does not exist, replace it with the closest valid column name.
-- Do not keep invalid column names from the user request.
-- For yfinance stock data, common columns include: Open, High, Low, Close, Adj Close, Volume.
-- Return ONLY corrected executable Python code.
-- Always print results in clean human-readable format (no pandas dtype output)
-- No markdown.
-- No explanation.
-- No extra text.
+RULES:
+- Return ONLY corrected executable Python code
+- No markdown
+- No explanations
+- Prefer simple, robust code
+- Use the execution error as the primary signal to identify the problem
+- If a variable or column name is invalid:
+  - inspect the available structure (e.g., data.columns)
+  - use the closest valid field when justified
+- Do not preserve broken names from the original code
+- If uncertainty remains, write code that safely checks before accessing data
+- Avoid unnecessary imports or complex logic
+- Always print results in clean human-readable format
 """
 
     data = {
