@@ -56,6 +56,48 @@ pandas, matplotlib, yfinance
 
     return result["choices"][0]["message"]["content"]
 
+def repair_code(prompt, bad_code, error_message):
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    repair_prompt = f"""
+The following Python code failed.
+
+User request:
+{prompt}
+
+Failed code:
+{bad_code}
+
+Execution error:
+{error_message}
+
+Fix the code so it runs correctly.
+
+STRICT RULES:
+- Output ONLY Python code
+- No markdown
+- No explanation
+- No extra text
+"""
+
+    data = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": "You fix Python code."},
+            {"role": "user", "content": repair_prompt}
+        ]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+    result = response.json()
+
+    return extract_python_code(result["choices"][0]["message"]["content"])
+
 def run_agent(prompt):
     raw_code = generate_code(prompt)
     code = extract_python_code(raw_code)
@@ -83,7 +125,36 @@ def run_agent(prompt):
             execution_output = "Plot generated successfully."
 
     except Exception as e:
-        execution_output = f"Execution error: {str(e)}"
+    error_message = str(e)
+
+    try:
+        # attempt repair
+        fixed_code = repair_code(prompt, code, error_message)
+
+        output_buffer = io.StringIO()
+        img = None
+
+        with contextlib.redirect_stdout(output_buffer):
+            exec(fixed_code, {})
+
+        # capture plot
+        if plt.get_fignums():
+            buf = io.BytesIO()
+            plt.savefig(buf, format="png", bbox_inches="tight")
+            buf.seek(0)
+            img = Image.open(buf)
+            plt.close("all")
+
+        execution_output = output_buffer.getvalue()
+        if not execution_output.strip() and img is None:
+            execution_output = "Code fixed and executed, but nothing was printed."
+        elif not execution_output.strip():
+            execution_output = "Plot generated after fixing code."
+
+        code = fixed_code  # show fixed version in UI
+
+    except Exception as e2:
+        execution_output = f"Execution error (after retry): {str(e2)}"
         plt.close("all")
 
     return code, execution_output, img
