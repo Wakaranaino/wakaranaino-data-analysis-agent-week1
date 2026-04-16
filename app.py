@@ -4,7 +4,9 @@ from executor import run_agent
 with gr.Blocks() as demo:
     gr.Markdown("# AI Data Analysis Agent")
 
-    # Row 1: Prompt + Interpretation
+    history_state = gr.State([])
+
+    # Row 1: Prompt + Conversation History
     with gr.Row():
         with gr.Column():
             prompt = gr.Textbox(
@@ -16,8 +18,8 @@ with gr.Blocks() as demo:
 
         with gr.Column():
             interpretation = gr.Textbox(
-                label="Interpretation",
-                lines=8
+                label="Conversation History",
+                lines=12
             )
 
     # Row 2: Plot + Execution Output
@@ -49,13 +51,14 @@ with gr.Blocks() as demo:
 
     submit_btn.click(
         fn=run_agent,
-        inputs=prompt,
+        inputs=[prompt, history_state],
         outputs=[
             code_output,
             execution_output,
             run_status,
             interpretation,
-            plot_output
+            plot_output,
+            history_state
         ]
     )
 
