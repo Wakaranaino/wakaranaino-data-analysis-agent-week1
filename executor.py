@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from PIL import Image
 
-from llm import generate_code, repair_code, interpret_result, extract_python_code
+from llm import generate_code, repair_code, interpret_result, extract_python_code, verify_code_semantics
 
 EXEC_TIMEOUT = 15
 MAX_ATTEMPTS = 3  # 1 original + 2 retries
@@ -140,6 +140,11 @@ def run_agent(prompt: str):
 
     raw_code = generate_code(prompt)
     code = extract_python_code(raw_code)
+
+    # Semantic verification before execution
+    semantic_result = verify_code_semantics(prompt, code)
+    if semantic_result != "PASS":
+        code = repair_code(prompt, code, semantic_result)
 
     attempt = 0
     last_error = None
