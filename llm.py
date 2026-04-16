@@ -4,6 +4,7 @@ import requests
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL_NAME = "llama-3.1-8b-instant"
+API_TIMEOUT = 30
 
 
 def extract_python_code(raw_text: str) -> str:
@@ -29,7 +30,12 @@ def _post_chat(messages):
         "messages": messages
     }
 
-    response = requests.post(GROQ_URL, headers=headers, json=data)
+    response = requests.post(
+        GROQ_URL,
+        headers=headers,
+        json=data,
+        timeout=API_TIMEOUT
+    )
     response.raise_for_status()
     result = response.json()
     return result["choices"][0]["message"]["content"]
@@ -38,9 +44,7 @@ def _post_chat(messages):
 def generate_code(prompt: str) -> str:
     system_prompt = """
 You are a Python data analysis code generator.
-
 Return ONLY executable Python code.
-
 STRICT RULES:
 - No markdown
 - No explanations
@@ -61,7 +65,6 @@ STRICT RULES:
 - If a requested field name does not exactly exist, map it to the closest valid field based on available columns and context
 - Do not preserve invalid or misspelled field names just for consistency with the user's wording
 - If no timeframe is specified, default to a recent period instead of inventing arbitrary historical dates
-
 Use only these libraries when needed:
 pandas, matplotlib, yfinance
 """
@@ -75,18 +78,13 @@ pandas, matplotlib, yfinance
 def repair_code(prompt: str, bad_code: str, error_message: str) -> str:
     repair_prompt = f"""
 The following Python code failed.
-
 User request:
 {prompt}
-
 Failed code:
 {bad_code}
-
 Execution error:
 {error_message}
-
 Fix the code so it runs correctly.
-
 RULES:
 - Return ONLY corrected executable Python code
 - No markdown
@@ -119,36 +117,27 @@ RULES:
 def interpret_result(prompt: str, code: str, execution_output: str, status: str) -> str:
     interpretation_prompt = f"""
 You are a data analysis assistant.
-
 User request:
 {prompt}
-
 Generated Python code:
 {code}
-
 Execution output:
 {execution_output}
-
 Run status:
 {status}
-
 Write a clear, concise interpretation for the user.
-
 RULES:
 - Start with the final result and what it means (this is the main focus)
 - If applicable, briefly explain what data was used (e.g., which column or metric)
 - If user wording was mapped to a different actual column, clearly state the mapping:
   Example: "Interpreted 'closingprice' as 'Close'"
 - Keep explanations short and natural (2–4 sentences total)
-
 - If the code required fixing:
   - Mention it briefly at the END as a short note
   - Do NOT start with the error
   - Do NOT over-explain the debugging process
-
 - If the run failed completely:
   - Explain the reason clearly and what likely caused it
-
 - Do NOT mention internal APIs, retries, or system mechanics
 - Do NOT repeat raw outputs verbatim
 """
