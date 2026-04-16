@@ -19,6 +19,21 @@ def extract_python_code(raw_text: str) -> str:
     return raw_text
 
 
+def format_history_for_prompt(history=None) -> str:
+    if not history:
+        return "No prior conversation history."
+
+    formatted_turns = []
+    for turn in history[-5:]:
+        user_text = turn.get("user", "").strip()
+        assistant_text = turn.get("assistant", "").strip()
+        formatted_turns.append(
+            f"User: {user_text}\nAssistant: {assistant_text}"
+        )
+
+    return "\n\n".join(formatted_turns)
+
+
 def _post_chat(messages):
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -41,7 +56,9 @@ def _post_chat(messages):
     return result["choices"][0]["message"]["content"]
 
 
-def generate_code(prompt: str) -> str:
+def generate_code(prompt: str, history=None) -> str:
+    history_text = format_history_for_prompt(history)
+
     system_prompt = """
 You are a Python data analysis code generator.
 Return ONLY executable Python code.
@@ -69,22 +86,40 @@ Use only these libraries when needed:
 pandas, matplotlib, yfinance
 """
 
+    user_prompt = f"""
+Conversation history:
+{history_text}
+
+Current user request:
+{prompt}
+"""
+
     return _post_chat([
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": user_prompt}
     ])
 
 
-def repair_code(prompt: str, bad_code: str, error_message: str) -> str:
+def repair_code(prompt: str, bad_code: str, error_message: str, history=None) -> str:
+    history_text = format_history_for_prompt(history)
+
     repair_prompt = f"""
+Conversation history:
+{history_text}
+
 The following Python code failed.
-User request:
+
+Current user request:
 {prompt}
+
 Failed code:
 {bad_code}
+
 Execution error:
 {error_message}
+
 Fix the code so it runs correctly.
+
 RULES:
 - Return ONLY corrected executable Python code
 - No markdown
@@ -114,18 +149,27 @@ RULES:
     return extract_python_code(raw)
 
 
-def interpret_result(prompt: str, code: str, execution_output: str, status: str) -> str:
+def interpret_result(prompt: str, code: str, execution_output: str, status: str, history=None) -> str:
+    history_text = format_history_for_prompt(history)
+
     interpretation_prompt = f"""
-You are a data analysis assistant.
-User request:
+Conversation history:
+{history_text}
+
+Current user request:
 {prompt}
+
 Generated Python code:
 {code}
+
 Execution output:
 {execution_output}
+
 Run status:
 {status}
+
 Write a clear, concise interpretation for the user.
+
 RULES:
 - Start with the final result and what it means (this is the main focus)
 - If applicable, briefly explain what data was used (e.g., which column or metric)
@@ -147,11 +191,15 @@ RULES:
         {"role": "user", "content": interpretation_prompt}
     ])
 
-def verify_code_semantics(prompt: str, code: str) -> str:
-    verify_prompt = f"""
-You are a semantic verifier for a Python data analysis agent.
 
-User request:
+def verify_code_semantics(prompt: str, code: str, history=None) -> str:
+    history_text = format_history_for_prompt(history)
+
+    verify_prompt = f"""
+Conversation history:
+{history_text}
+
+Current user request:
 {prompt}
 
 Generated Python code:
