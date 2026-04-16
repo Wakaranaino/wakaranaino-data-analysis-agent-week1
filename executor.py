@@ -7,7 +7,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from PIL import Image
 
-from llm import generate_code, repair_code, interpret_result, extract_python_code, verify_code_semantics
+from llm import (
+    generate_code,
+    repair_code,
+    interpret_result,
+    extract_python_code,
+    verify_code_semantics,
+)
 
 EXEC_TIMEOUT = 15
 MAX_ATTEMPTS = 3  # 1 original + 2 retries
@@ -127,24 +133,45 @@ def execute_code_with_timeout(code: str, timeout: int = EXEC_TIMEOUT):
     return queue.get()
 
 
-def run_agent(prompt: str):
+def build_history_text(history):
+    if not history:
+        return ""
+
+    lines = []
+    for turn in history:
+        lines.append(f"User: {turn['user']}")
+        lines.append(f"Assistant: {turn['assistant']}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def run_agent(prompt: str, history: list | None = None):
+    if history is None:
+        history = []
+
     is_valid, validation_message = validate_prompt(prompt)
     if not is_valid:
+        updated_history = history + [{
+            "user": prompt,
+            "assistant": "The request was blocked because it appears to ask for unsafe or unsupported operations."
+        }]
+        history_text = build_history_text(updated_history)
+
         return (
             "",
             validation_message,
             "Blocked by input validation",
-            "The request was blocked because it appears to ask for unsafe or unsupported operations.",
-            None
+            history_text,
+            None,
+            updated_history
         )
 
-    raw_code = generate_code(prompt)
+    raw_code = generate_code(prompt, history=history)
     code = extract_python_code(raw_code)
 
-    # Semantic verification before execution
-    semantic_result = verify_code_semantics(prompt, code)
+    semantic_result = verify_code_semantics(prompt, code, history=history)
     if semantic_result != "PASS":
-        code = repair_code(prompt, code, semantic_result)
+        code = repair_code(prompt, code, semantic_result, history=history)
 
     attempt = 0
     last_error = None
@@ -163,15 +190,27 @@ def run_agent(prompt: str):
         attempt += 1
 
         if attempt >= MAX_ATTEMPTS:
+            final_interpretation = (
+                f"The system attempted to fix the code multiple times but failed. "
+                f"Final error: {last_error}"
+            )
+
+            updated_history = history + [{
+                "user": prompt,
+                "assistant": final_interpretation
+            }]
+            history_text = build_history_text(updated_history)
+
             return (
                 code,
                 f"Execution error (after {attempt-1} retries): {last_error}",
                 "Retry failed",
-                f"The system attempted to fix the code multiple times but failed. Final error: {last_error}",
-                None
+                history_text,
+                None,
+                updated_history
             )
 
-        code = repair_code(prompt, code, last_error)
+        code = repair_code(prompt, code, last_error, history=history)
 
     img = None
     if result["image_bytes"] is not None:
@@ -184,6 +223,12 @@ def run_agent(prompt: str):
     elif not execution_output.strip():
         execution_output = "Plot generated successfully."
 
-    interpretation = interpret_result(prompt, code, execution_output, status)
+    interpretation = interpret_result(prompt, code, execution_output, status, history=history)
 
-    return code, execution_output, status, interpretation, img
+    updated_history = history + [{
+        "user": prompt,
+        "assistant": interpretation
+    }]
+    history_text = build_history_text(updated_history)
+
+    return code, execution_output, status, history_text, img, updated_history
