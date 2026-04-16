@@ -1,4 +1,5 @@
 import io
+import re
 import traceback
 import multiprocessing as mp
 import matplotlib
@@ -10,6 +11,55 @@ from llm import generate_code, repair_code, interpret_result, extract_python_cod
 
 EXEC_TIMEOUT = 15
 MAX_ATTEMPTS = 3  # 1 original + 2 retries
+
+BLOCKED_RULES = [
+    {
+        "patterns": [
+            r"\bos\.(remove|unlink|rmdir|system|popen)\b",
+            r"\bshutil\.(rmtree|move|copy)\b",
+            r"\b(delete|remove|overwrite|destroy)\b",
+            r"\bopen\s*\(",
+            r"\bwith\s+open\s*\("
+        ],
+        "message": "This prompt appears to request file-system access or file modification, which is not allowed. Please limit your request to safe data analysis tasks."
+    },
+    {
+        "patterns": [
+            r"\bsubprocess\b",
+            r"\b(import|from)\s+subprocess\b",
+            r"\b(shell command|bash|terminal command|cmd)\b"
+        ],
+        "message": "This prompt appears to request shell or subprocess execution, which is not allowed. Please ask for analysis, plotting, or statistics instead."
+    },
+    {
+        "patterns": [
+            r"\b(secret|token|password|api key|environment variable|env var)\b",
+            r"\b__import__\b"
+        ],
+        "message": "This prompt appears to request secrets, credentials, or environment information, which is not allowed."
+    },
+    {
+        "patterns": [
+            r"\b(scan ports|port scan|hack|exploit|malware|ransomware)\b",
+            r"\bimport\s+socket\b"
+        ],
+        "message": "This prompt appears to request harmful or security-related operations, which are not supported in this app."
+    },
+]
+
+
+def validate_prompt(prompt: str):
+    prompt_lower = prompt.lower().strip()
+
+    if not prompt_lower:
+        return False, "Please enter a prompt."
+
+    for rule in BLOCKED_RULES:
+        for pattern in rule["patterns"]:
+            if re.search(pattern, prompt_lower):
+                return False, rule["message"]
+
+    return True, ""
 
 
 def _execute_code_worker(code: str, queue: mp.Queue):
@@ -78,6 +128,16 @@ def execute_code_with_timeout(code: str, timeout: int = EXEC_TIMEOUT):
 
 
 def run_agent(prompt: str):
+    is_valid, validation_message = validate_prompt(prompt)
+    if not is_valid:
+        return (
+            "",
+            validation_message,
+            "Blocked by input validation",
+            "The request was blocked because it appears to ask for unsafe or unsupported operations.",
+            None
+        )
+
     raw_code = generate_code(prompt)
     code = extract_python_code(raw_code)
 
