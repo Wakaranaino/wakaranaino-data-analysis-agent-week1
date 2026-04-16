@@ -138,7 +138,8 @@ def build_history_text(history):
         return ""
 
     lines = []
-    for turn in history:
+    for i, turn in enumerate(history, start=1):
+        lines.append(f"--- Turn {i} ---")
         lines.append(f"User: {turn['user']}")
         lines.append(f"Assistant: {turn['assistant']}")
         lines.append("")
@@ -153,7 +154,8 @@ def run_agent(prompt: str, history: list | None = None):
     if not is_valid:
         updated_history = history + [{
             "user": prompt,
-            "assistant": "The request was blocked because it appears to ask for unsafe or unsupported operations."
+            "assistant": "Request blocked. See Execution Output for details.",
+            "success": False
         }]
         history_text = build_history_text(updated_history)
 
@@ -190,14 +192,10 @@ def run_agent(prompt: str, history: list | None = None):
         attempt += 1
 
         if attempt >= MAX_ATTEMPTS:
-            final_interpretation = (
-                f"The system attempted to fix the code multiple times but failed. "
-                f"Final error: {last_error}"
-            )
-
             updated_history = history + [{
                 "user": prompt,
-                "assistant": final_interpretation
+                "assistant": "Request failed. See Execution Output for details.",
+                "success": False
             }]
             history_text = build_history_text(updated_history)
 
@@ -227,7 +225,8 @@ def run_agent(prompt: str, history: list | None = None):
 
     updated_history = history + [{
         "user": prompt,
-        "assistant": interpretation
+        "assistant": interpretation,
+        "success": True
     }]
     history_text = build_history_text(updated_history)
 
