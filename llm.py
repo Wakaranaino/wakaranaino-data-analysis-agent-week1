@@ -146,3 +146,45 @@ RULES:
         {"role": "system", "content": "You explain data analysis results clearly and briefly."},
         {"role": "user", "content": interpretation_prompt}
     ])
+
+def verify_code_semantics(prompt: str, code: str) -> str:
+    verify_prompt = f"""
+You are a semantic verifier for a Python data analysis agent.
+
+User request:
+{prompt}
+
+Generated Python code:
+{code}
+
+Determine whether the code meaningfully matches the user's request.
+
+Check for MAJOR mismatches only, such as:
+- wrong dataset or wrong target entity
+- wrong timeframe / scope / range
+- missing requested calculations
+- missing requested plot or chart
+- wrong columns / metrics
+- code solves a different task than requested
+
+Ignore minor style issues.
+
+Respond in ONE of these formats only:
+
+PASS
+
+or
+
+FAIL: short reason
+"""
+
+    return _post_chat([
+        {
+            "role": "system",
+            "content": "You verify whether generated Python code matches a user request."
+        },
+        {
+            "role": "user",
+            "content": verify_prompt
+        }
+    ]).strip()
