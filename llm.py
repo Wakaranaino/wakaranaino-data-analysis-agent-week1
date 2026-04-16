@@ -23,8 +23,13 @@ def format_history_for_prompt(history=None) -> str:
     if not history:
         return "No prior conversation history."
 
+    successful_turns = [turn for turn in history if turn.get("success") is True]
+
+    if not successful_turns:
+        return "No prior successful conversation history."
+
     formatted_turns = []
-    for turn in history[-5:]:
+    for turn in successful_turns[-5:]:
         user_text = turn.get("user", "").strip()
         assistant_text = turn.get("assistant", "").strip()
         formatted_turns.append(
