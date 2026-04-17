@@ -147,66 +147,108 @@ def build_history_text(history):
 
 
 def run_agent(prompt: str, history: list | None = None):
-    if history is None:
-        history = []
+    try:
+        if history is None:
+            history = []
 
-    is_valid, validation_message = validate_prompt(prompt)
-    if not is_valid:
+        is_valid, validation_message = validate_prompt(prompt)
+        if not is_valid:
+            updated_history = history + [{
+                "user": prompt,
+                "assistant": "Request blocked. See Execution Output for details.",
+                "success": False
+            }]
+            history_text = build_history_text(updated_history)
+
+            return (
+                "",
+                validation_message,
+                "Blocked by input validation",
+                history_text,
+                None,
+                updated_history
+            )
+
+        raw_code = generate_code(prompt, history=history)
+        code = extract_python_code(raw_code)
+
+        semantic_result = verify_code_semantics(prompt, code, history=history)
+        if semantic_result != "PASS":
+            code = repair_code(prompt, code, semantic_result, history=history)
+
+        attempt = 0
+        last_error = None
+
+        while attempt < MAX_ATTEMPTS:
+            result = execute_code_with_timeout(code, EXEC_TIMEOUT)
+
+            if result["success"]:
+                if attempt == 0:
+                    status = "Executed on first try"
+                else:
+                    status = f"Fixed and executed on retry (attempt {attempt})"
+                break
+
+            last_error = result["error"]
+            attempt += 1
+
+            if attempt >= MAX_ATTEMPTS:
+                updated_history = history + [{
+                    "user": prompt,
+                    "assistant": "Request failed. See Execution Output for details.",
+                    "success": False
+                }]
+                history_text = build_history_text(updated_history)
+
+                return (
+                    code,
+                    f"Execution error (after {attempt-1} retries): {last_error}",
+                    "Retry failed",
+                    history_text,
+                    None,
+                    updated_history
+                )
+
+            code = repair_code(prompt, code, last_error, history=history)
+
+        img = None
+        if result["image_bytes"] is not None:
+            img = Image.open(io.BytesIO(result["image_bytes"]))
+
+        execution_output = result["output"]
+
+        if not execution_output.strip() and img is None:
+            execution_output = "Code executed successfully, but nothing was printed."
+        elif not execution_output.strip():
+            execution_output = "Plot generated successfully."
+
+        interpretation = interpret_result(prompt, code, execution_output, status, history=history)
+
         updated_history = history + [{
             "user": prompt,
-            "assistant": "Request blocked. See Execution Output for details.",
+            "assistant": interpretation,
+            "success": True
+        }]
+        history_text = build_history_text(updated_history)
+
+        return code, execution_output, status, history_text, img, updated_history
+
+    except Exception as e:
+        updated_history = (history or []) + [{
+            "user": prompt,
+            "assistant": "Request failed due to a system or API error. See Execution Output for details.",
             "success": False
         }]
         history_text = build_history_text(updated_history)
 
         return (
             "",
-            validation_message,
-            "Blocked by input validation",
+            f"System error: {str(e)}",
+            "System/API error",
             history_text,
             None,
             updated_history
         )
-
-    raw_code = generate_code(prompt, history=history)
-    code = extract_python_code(raw_code)
-
-    semantic_result = verify_code_semantics(prompt, code, history=history)
-    if semantic_result != "PASS":
-        code = repair_code(prompt, code, semantic_result, history=history)
-
-    attempt = 0
-    last_error = None
-
-    while attempt < MAX_ATTEMPTS:
-        result = execute_code_with_timeout(code, EXEC_TIMEOUT)
-
-        if result["success"]:
-            if attempt == 0:
-                status = "Executed on first try"
-            else:
-                status = f"Fixed and executed on retry (attempt {attempt})"
-            break
-
-        last_error = result["error"]
-        attempt += 1
-
-        if attempt >= MAX_ATTEMPTS:
-            updated_history = history + [{
-                "user": prompt,
-                "assistant": "Request failed. See Execution Output for details.",
-                "success": False
-            }]
-            history_text = build_history_text(updated_history)
-
-            return (
-                code,
-                f"Execution error (after {attempt-1} retries): {last_error}",
-                "Retry failed",
-                history_text,
-                None,
-                updated_history
-            )
 
         code = repair_code(prompt, code, last_error, history=history)
 
