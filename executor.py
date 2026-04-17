@@ -12,7 +12,6 @@ from llm import (
     repair_code,
     interpret_result,
     extract_python_code,
-    # verify_code_semantics,
 )
 
 EXEC_TIMEOUT = 15
@@ -189,10 +188,6 @@ def run_agent(prompt: str, history: list | None = None):
         raw_code = generate_code(prompt, history=history)
         code = extract_python_code(raw_code)
 
-        # Semantic verification disabled for now to reduce extra LLM calls
-        # semantic_result = verify_code_semantics(prompt, code, history=history)
-        # if semantic_result != "PASS":
-        #     code = repair_code(prompt, code, semantic_result, history=history)
 
         attempt = 0
         last_error = None
