@@ -63,31 +63,21 @@ def generate_code(prompt: str, history=None) -> str:
     history_text = format_history_for_prompt(history)
 
     system_prompt = """
-You are a Python data analysis code generator.
-Return ONLY executable Python code.
-STRICT RULES:
-- No markdown
-- No explanations
-- No text before or after the code
-- Use only available libraries
-- Prefer simple, robust code
-- Prefer direct solutions over clever or highly abstract code
-- Avoid unnecessary imports, wrappers, or transformations
-- Always print results in clean human-readable format
-- When working with tabular data, inspect column names before using ambiguous or user-provided field names
-- Do not assume a column exists without checking or using a clearly justified mapping
-- If a user-provided field name may be ambiguous or incorrect, inspect the available columns and use the closest valid field only when appropriate
-- When possible, write code that is resilient to minor naming differences
-- For plots, use matplotlib and call plt.show()
-- If formatting a value with f-strings (e.g. :.2f), make sure the value is a scalar, not a pandas Series
-- Convert Series results to scalar before formatting when needed (e.g. .item(), float(), or selecting one value)
-- Interpret the user's intended meaning, not just the exact field wording
-- If a requested field name does not exactly exist, map it to the closest valid field based on available columns and context
-- Do not preserve invalid or misspelled field names just for consistency with the user's wording
-- If no timeframe is specified, default to a recent period instead of inventing arbitrary historical dates
-- Never assume 'Adj Close' exists. Use 'Close' by default.
-Use only these libraries when needed:
-pandas, matplotlib, yfinance, scipy, numpy
+You generate executable Python code for data analysis.
+Return ONLY Python code.
+
+Rules:
+- No markdown or explanations
+- Use only: pandas, matplotlib, yfinance, scipy, numpy
+- Prefer simple, direct, robust code
+- Print results clearly
+- Inspect available columns before selecting fields
+- Match the user's intended meaning, not just exact wording
+- Do not keep invalid or misspelled field names
+- For yfinance, use 'Close' by default and never assume 'Adj Close' exists
+- If no timeframe is given, use a recent default period
+- If formatting with :.2f, convert arrays/Series to scalars first
+- Use matplotlib for plots and call plt.show()
 """
 
     user_prompt = f"""
@@ -111,8 +101,6 @@ def repair_code(prompt: str, bad_code: str, error_message: str, history=None) ->
 Conversation history:
 {history_text}
 
-The following Python code failed.
-
 Current user request:
 {prompt}
 
@@ -122,29 +110,20 @@ Failed code:
 Execution error:
 {error_message}
 
-Fix the code so it runs correctly.
+Fix the code.
 
-RULES:
-- Return ONLY corrected executable Python code
-- No markdown
-- No explanations
+Rules:
+- Return ONLY corrected Python code
+- No markdown or explanations
 - Prefer simple, robust code
-- Use the execution error as the primary signal to identify the problem
-- If a variable or column name is invalid:
-  - inspect the available structure (e.g., data.columns)
-  - use the closest valid field when justified
-- Do not preserve broken names from the original code
-- If uncertainty remains, write code that safely checks before accessing data
+- Use the error as the main signal
+- Inspect available columns before selecting fields
+- Replace invalid field names with the closest valid one when justified
+- Do not preserve broken or misspelled names
+- For yfinance, use 'Close' by default and never assume 'Adj Close' exists
+- If formatting with :.2f, convert arrays/Series to scalars first
+- If the error mentions Adj Close, switch to Close
 - Avoid unnecessary imports or complex logic
-- Always print results in clean human-readable format
-- If formatting a value with f-strings (e.g. :.2f), make sure the value is a scalar, not a pandas Series
-- Convert Series results to scalar before formatting when needed (e.g. .item(), float(), or selecting one value)
-- If the error mentions Series.__format__, convert the Series to a scalar before formatting
-- Use the execution error and available data structure to infer the user's intended meaning
-- If a requested field name is invalid, replace it with the closest valid field based on meaning, not literal wording
-- Do not preserve broken or misspelled names for consistency with the original request
-- If no timeframe was specified, prefer a recent default period rather than arbitrary hard-coded dates
-- If KeyError mentions Adj Close, switch to Close.
 """
 
     raw = _post_chat([
@@ -155,17 +134,10 @@ RULES:
 
 
 def interpret_result(prompt: str, code: str, execution_output: str, status: str, history=None) -> str:
-    history_text = format_history_for_prompt(history)
 
     interpretation_prompt = f"""
-Conversation history:
-{history_text}
-
 Current user request:
 {prompt}
-
-Generated Python code:
-{code}
 
 Execution output:
 {execution_output}
@@ -173,71 +145,19 @@ Execution output:
 Run status:
 {status}
 
-Write a clear, concise interpretation for the user.
+Write a short user-facing interpretation.
 
-RULES:
-- Start with the final result and what it means (this is the main focus)
-- If applicable, briefly explain what data was used (e.g., which column or metric)
-- If user wording was mapped to a different actual column, clearly state the mapping:
-  Example: "Interpreted 'closingprice' as 'Close'"
-- Keep explanations short and natural (2–4 sentences total)
-- If the code required fixing:
-  - Mention it briefly at the END as a short note
-  - Do NOT start with the error
-  - Do NOT over-explain the debugging process
-- If the run failed completely:
-  - Explain the reason clearly and what likely caused it
-- Do NOT mention internal APIs, retries, or system mechanics
-- Do NOT repeat raw outputs verbatim
+Rules:
+- 2 to 4 sentences only
+- Focus on the final result
+- Mention the data/metric briefly if helpful
+- If the run needed fixing, mention that briefly at the end
+- Do not include code
+- Do not include debugging details
+- Do not repeat raw output verbatim
 """
 
     return _post_chat([
         {"role": "system", "content": "You explain data analysis results clearly and briefly."},
         {"role": "user", "content": interpretation_prompt}
     ])
-
-
-def verify_code_semantics(prompt: str, code: str, history=None) -> str:
-    history_text = format_history_for_prompt(history)
-
-    verify_prompt = f"""
-Conversation history:
-{history_text}
-
-Current user request:
-{prompt}
-
-Generated Python code:
-{code}
-
-Determine whether the code meaningfully matches the user's request.
-
-Check for MAJOR mismatches only, such as:
-- wrong dataset or wrong target entity
-- wrong timeframe / scope / range
-- missing requested calculations
-- missing requested plot or chart
-- wrong columns / metrics
-- code solves a different task than requested
-
-Ignore minor style issues.
-
-Respond in ONE of these formats only:
-
-PASS
-
-or
-
-FAIL: short reason
-"""
-
-    return _post_chat([
-        {
-            "role": "system",
-            "content": "You verify whether generated Python code matches a user request."
-        },
-        {
-            "role": "user",
-            "content": verify_prompt
-        }
-    ]).strip()
