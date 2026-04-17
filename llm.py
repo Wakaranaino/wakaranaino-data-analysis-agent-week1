@@ -86,7 +86,7 @@ STRICT RULES:
 - Do not preserve invalid or misspelled field names just for consistency with the user's wording
 - If no timeframe is specified, default to a recent period instead of inventing arbitrary historical dates
 Use only these libraries when needed:
-pandas, matplotlib, yfinance
+pandas, matplotlib, yfinance, scipy, numpy
 """
 
     user_prompt = f"""
