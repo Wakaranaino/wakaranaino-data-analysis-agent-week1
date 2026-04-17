@@ -85,6 +85,7 @@ STRICT RULES:
 - If a requested field name does not exactly exist, map it to the closest valid field based on available columns and context
 - Do not preserve invalid or misspelled field names just for consistency with the user's wording
 - If no timeframe is specified, default to a recent period instead of inventing arbitrary historical dates
+- Never assume 'Adj Close' exists. Use 'Close' by default.
 Use only these libraries when needed:
 pandas, matplotlib, yfinance, scipy, numpy
 """
@@ -143,6 +144,7 @@ RULES:
 - If a requested field name is invalid, replace it with the closest valid field based on meaning, not literal wording
 - Do not preserve broken or misspelled names for consistency with the original request
 - If no timeframe was specified, prefer a recent default period rather than arbitrary hard-coded dates
+- If KeyError mentions Adj Close, switch to Close.
 """
 
     raw = _post_chat([
