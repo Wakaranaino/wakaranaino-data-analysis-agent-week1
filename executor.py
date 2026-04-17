@@ -16,7 +16,7 @@ from llm import (
 )
 
 EXEC_TIMEOUT = 15
-MAX_ATTEMPTS = 3  # 1 original + 2 retries
+MAX_ATTEMPTS = 2  # 1 original + 1 retry
 
 BLOCKED_RULES = [
     {
@@ -249,27 +249,3 @@ def run_agent(prompt: str, history: list | None = None):
             None,
             updated_history
         )
-
-        code = repair_code(prompt, code, last_error, history=history)
-
-    img = None
-    if result["image_bytes"] is not None:
-        img = Image.open(io.BytesIO(result["image_bytes"]))
-
-    execution_output = result["output"]
-
-    if not execution_output.strip() and img is None:
-        execution_output = "Code executed successfully, but nothing was printed."
-    elif not execution_output.strip():
-        execution_output = "Plot generated successfully."
-
-    interpretation = interpret_result(prompt, code, execution_output, status, history=history)
-
-    updated_history = history + [{
-        "user": prompt,
-        "assistant": interpretation,
-        "success": True
-    }]
-    history_text = build_history_text(updated_history)
-
-    return code, execution_output, status, history_text, img, updated_history
