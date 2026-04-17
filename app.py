@@ -2,11 +2,10 @@ import gradio as gr
 from executor import run_agent
 
 EXAMPLE_PROMPTS = {
-    "AAPL Trend (100d)": "Plot AAPL closing prices for the last 100 days",
-    "TSLA vs MSFT Chart": "Plot Tesla (TSLA) and Microsoft (MSFT) monthly returns for the last 1 year",
-    "TSLA vs MSFT t-test": "Run a t-test on Tesla (TSLA) and Microsoft (MSFT) monthly returns over the last 1 year",
-    "IBM Stats (100d)": "Show mean, median, standard deviation, min, and max of IBM closing prices for the last 100 days",
-    "What about NVDA?": "What about NVDA?"
+    "AAPL Trend": "Plot AAPL closing prices for the last 100 days",
+    "TSLA vs MSFT": "Compare the monthly returns of Tesla (TSLA) and Microsoft (MSFT) over the past year. Show both on the same chart and run a t-test to see if the mean returns are significantly different.",
+    "IBM Stats": "Show mean, median, standard deviation, min, and max of IBM closing prices for the last 100 days",
+    "Same for NVDA": "Do the same for NVDA as for IBM"
 }
 
 
@@ -30,11 +29,10 @@ with gr.Blocks() as demo:
 
             gr.Markdown("**Suggested prompts:**")
             with gr.Row():
-                ex1 = gr.Button("AAPL Trend (100d)", size="sm")
-                ex2 = gr.Button("TSLA vs MSFT Chart", size="sm")
-                ex3 = gr.Button("TSLA vs MSFT t-test", size="sm")
-                ex4 = gr.Button("IBM Stats (100d)", size="sm")
-                ex5 = gr.Button("What about NVDA?", size="sm")
+                ex1 = gr.Button("AAPL Trend", size="sm")
+                ex2 = gr.Button("TSLA vs MSFT", size="sm")
+                ex3 = gr.Button("IBM Stats", size="sm")
+                ex4 = gr.Button("Same for NVDA", size="sm")
 
             submit_btn = gr.Button("Submit", variant="primary")
 
@@ -71,11 +69,10 @@ with gr.Blocks() as demo:
         lines=1
     )
 
-    ex1.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["AAPL Trend (100d)"]), outputs=prompt)
-    ex2.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["TSLA vs MSFT Chart"]), outputs=prompt)
-    ex3.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["TSLA vs MSFT t-test"]), outputs=prompt)
-    ex4.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["IBM Stats (100d)"]), outputs=prompt)
-    ex5.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["What about NVDA?"]), outputs=prompt)
+    ex1.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["AAPL Trend"]), outputs=prompt)
+    ex2.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["TSLA vs MSFT"]), outputs=prompt)
+    ex3.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["IBM Stats"]), outputs=prompt)
+    ex4.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["Same for NVDA"]), outputs=prompt)
 
     submit_btn.click(
         fn=run_agent,
