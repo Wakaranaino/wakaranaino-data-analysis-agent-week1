@@ -12,7 +12,7 @@ from llm import (
     repair_code,
     interpret_result,
     extract_python_code,
-    verify_code_semantics,
+    # verify_code_semantics,
 )
 
 EXEC_TIMEOUT = 15
@@ -145,6 +145,23 @@ def build_history_text(history):
         lines.append("")
     return "\n".join(lines).strip()
 
+def is_external_data_error(error_text: str) -> bool:
+    external_error_keywords = [
+        "YFRateLimitError",
+        "Too Many Requests",
+        "429",
+        "ReadTimeout",
+        "ConnectTimeout",
+        "ConnectionError",
+        "Temporary failure",
+        "Max retries exceeded",
+        "timed out",
+        "SSLError",
+        "ProxyError",
+        "RemoteDisconnected",
+    ]
+
+    return any(keyword in error_text for keyword in external_error_keywords)
 
 def run_agent(prompt: str, history: list | None = None):
     try:
@@ -172,9 +189,10 @@ def run_agent(prompt: str, history: list | None = None):
         raw_code = generate_code(prompt, history=history)
         code = extract_python_code(raw_code)
 
-        semantic_result = verify_code_semantics(prompt, code, history=history)
-        if semantic_result != "PASS":
-            code = repair_code(prompt, code, semantic_result, history=history)
+        # Semantic verification disabled for now to reduce extra LLM calls
+        # semantic_result = verify_code_semantics(prompt, code, history=history)
+        # if semantic_result != "PASS":
+        #     code = repair_code(prompt, code, semantic_result, history=history)
 
         attempt = 0
         last_error = None
@@ -191,6 +209,24 @@ def run_agent(prompt: str, history: list | None = None):
 
             last_error = result["error"]
             attempt += 1
+
+            # Do not retry code repair for external/API/data-source failures
+            if is_external_data_error(last_error):
+                updated_history = history + [{
+                    "user": prompt,
+                    "assistant": "Request failed. See Execution Output for details.",
+                    "success": False
+                }]
+                history_text = build_history_text(updated_history)
+
+                return (
+                    code,
+                    f"Execution error: {last_error}",
+                    "External data source / API error",
+                    history_text,
+                    None,
+                    updated_history
+                )
 
             if attempt >= MAX_ATTEMPTS:
                 updated_history = history + [{
