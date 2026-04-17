@@ -23,8 +23,30 @@ def run_agent_ui(prompt, history_state):
 
 
 css = """
-.compact-gap {margin-top: -10px;}
+.example-row {
+    gap: 8px !important;
+    margin-top: -6px !important;
+    margin-bottom: 10px !important;
+    flex-wrap: nowrap !important;
+}
+
 .example-row button {
+    min-width: unset !important;
+    width: auto !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 14px !important;
+    font-size: 14px !important;
+    border-radius: 18px !important;
+    flex: 0 0 auto !important;
+}
+
+.action-row {
+    margin-top: -2px !important;
+    gap: 10px !important;
+}
+
+.action-row button {
     min-height: 42px !important;
 }
 """
@@ -43,14 +65,14 @@ with gr.Blocks(css=css) as demo:
             )
 
             with gr.Row(elem_classes="example-row"):
-                ex1 = gr.Button("AAPL Trend", size="sm")
-                ex2 = gr.Button("TSLA vs MSFT", size="sm")
-                ex3 = gr.Button("IBM Stats", size="sm")
-                ex4 = gr.Button("Same for NVDA", size="sm")
+                ex1 = gr.Button("AAPL Trend", variant="secondary")
+                ex2 = gr.Button("TSLA vs MSFT", variant="secondary")
+                ex3 = gr.Button("IBM Stats", variant="secondary")
+                ex4 = gr.Button("Same for NVDA", variant="secondary")
 
-            with gr.Row(elem_classes="compact-gap"):
-                clear_btn = gr.Button("Clear")
+            with gr.Row(elem_classes="action-row"):
                 submit_btn = gr.Button("Submit", variant="primary")
+                clear_btn = gr.Button("Clear")
 
         with gr.Column():
             interpretation = gr.Textbox(
