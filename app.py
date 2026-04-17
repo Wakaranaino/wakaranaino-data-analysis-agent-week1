@@ -13,12 +13,27 @@ def fill_prompt(text):
     return text
 
 
-with gr.Blocks() as demo:
+def clear_prompt():
+    return ""
+
+
+def run_agent_ui(prompt, history_state):
+    code, execution_output, run_status, interpretation, plot_output, updated_history = run_agent(prompt, history_state)
+    return code, execution_output, run_status, interpretation, plot_output, updated_history, ""
+
+
+css = """
+.compact-gap {margin-top: -10px;}
+.example-row button {
+    min-height: 42px !important;
+}
+"""
+
+with gr.Blocks(css=css) as demo:
     gr.Markdown("# AI Data Analysis Agent")
 
     history_state = gr.State([])
 
-    # Row 1: Prompt + Conversation History
     with gr.Row():
         with gr.Column():
             prompt = gr.Textbox(
@@ -27,14 +42,15 @@ with gr.Blocks() as demo:
                 placeholder="Try: Plot AAPL closing prices for the last 100 days"
             )
 
-            gr.Markdown("**Suggested prompts:**")
-            with gr.Row():
+            with gr.Row(elem_classes="example-row"):
                 ex1 = gr.Button("AAPL Trend", size="sm")
                 ex2 = gr.Button("TSLA vs MSFT", size="sm")
                 ex3 = gr.Button("IBM Stats", size="sm")
                 ex4 = gr.Button("Same for NVDA", size="sm")
 
-            submit_btn = gr.Button("Submit", variant="primary")
+            with gr.Row(elem_classes="compact-gap"):
+                clear_btn = gr.Button("Clear")
+                submit_btn = gr.Button("Submit", variant="primary")
 
         with gr.Column():
             interpretation = gr.Textbox(
@@ -42,7 +58,6 @@ with gr.Blocks() as demo:
                 lines=12
             )
 
-    # Row 2: Plot + Execution Output
     with gr.Row():
         with gr.Column():
             plot_output = gr.Image(
@@ -56,14 +71,12 @@ with gr.Blocks() as demo:
                 lines=14
             )
 
-    # Row 3: Generated Python Code
     code_output = gr.Code(
         label="Generated Python Code",
         language="python",
         lines=12
     )
 
-    # Row 4: Run Status
     run_status = gr.Textbox(
         label="Run Status",
         lines=1
@@ -74,8 +87,13 @@ with gr.Blocks() as demo:
     ex3.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["IBM Stats"]), outputs=prompt)
     ex4.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["Same for NVDA"]), outputs=prompt)
 
+    clear_btn.click(
+        fn=clear_prompt,
+        outputs=prompt
+    )
+
     submit_btn.click(
-        fn=run_agent,
+        fn=run_agent_ui,
         inputs=[prompt, history_state],
         outputs=[
             code_output,
@@ -83,7 +101,8 @@ with gr.Blocks() as demo:
             run_status,
             interpretation,
             plot_output,
-            history_state
+            history_state,
+            prompt
         ]
     )
 
