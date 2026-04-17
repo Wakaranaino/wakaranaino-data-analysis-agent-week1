@@ -258,7 +258,7 @@ def run_agent(prompt: str, history: list | None = None):
         elif not execution_output.strip():
             execution_output = "Plot generated successfully."
 
-        interpretation = interpret_result(prompt, code, execution_output, status, history=history)
+        interpretation = interpret_result(prompt, code, execution_output, status, history=None)
 
         updated_history = history + [{
             "user": prompt,
