@@ -1,6 +1,19 @@
 import gradio as gr
 from executor import run_agent
 
+EXAMPLE_PROMPTS = {
+    "AAPL Trend (100d)": "Plot AAPL closing prices for the last 100 days",
+    "TSLA vs MSFT Chart": "Plot Tesla (TSLA) and Microsoft (MSFT) monthly returns for the last 1 year",
+    "TSLA vs MSFT t-test": "Run a t-test on Tesla (TSLA) and Microsoft (MSFT) monthly returns over the last 1 year",
+    "IBM Stats (100d)": "Show mean, median, standard deviation, min, and max of IBM closing prices for the last 100 days",
+    "What about NVDA?": "What about NVDA?"
+}
+
+
+def fill_prompt(text):
+    return text
+
+
 with gr.Blocks() as demo:
     gr.Markdown("# AI Data Analysis Agent")
 
@@ -12,8 +25,17 @@ with gr.Blocks() as demo:
             prompt = gr.Textbox(
                 label="Prompt",
                 lines=3,
-                placeholder="Enter your request here..."
+                placeholder="Try: Plot AAPL closing prices for the last 100 days"
             )
+
+            gr.Markdown("**Suggested prompts:**")
+            with gr.Row():
+                ex1 = gr.Button("AAPL Trend (100d)", size="sm")
+                ex2 = gr.Button("TSLA vs MSFT Chart", size="sm")
+                ex3 = gr.Button("TSLA vs MSFT t-test", size="sm")
+                ex4 = gr.Button("IBM Stats (100d)", size="sm")
+                ex5 = gr.Button("What about NVDA?", size="sm")
+
             submit_btn = gr.Button("Submit", variant="primary")
 
         with gr.Column():
@@ -48,6 +70,12 @@ with gr.Blocks() as demo:
         label="Run Status",
         lines=1
     )
+
+    ex1.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["AAPL Trend (100d)"]), outputs=prompt)
+    ex2.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["TSLA vs MSFT Chart"]), outputs=prompt)
+    ex3.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["TSLA vs MSFT t-test"]), outputs=prompt)
+    ex4.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["IBM Stats (100d)"]), outputs=prompt)
+    ex5.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["What about NVDA?"]), outputs=prompt)
 
     submit_btn.click(
         fn=run_agent,
