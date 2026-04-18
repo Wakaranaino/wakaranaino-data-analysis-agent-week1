@@ -138,10 +138,17 @@ def build_history_text(history):
 
     lines = []
     for i, turn in enumerate(history, start=1):
-        lines.append(f"--- Turn {i} ---")
-        lines.append(f"User: {turn['user']}")
-        lines.append(f"Assistant: {turn['assistant']}")
+        lines.append(f"========== Turn {i} ==========")
         lines.append("")
+        lines.append("▶ USER")
+        lines.append(turn["user"])
+        lines.append("")
+        lines.append("◆ ASSISTANT")
+        lines.append(turn["assistant"])
+        lines.append("")
+        lines.append("────────────────────────────")
+        lines.append("")
+
     return "\n".join(lines).strip()
 
 def is_external_data_error(error_text: str) -> bool:
