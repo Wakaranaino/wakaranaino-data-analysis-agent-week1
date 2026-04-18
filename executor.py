@@ -146,8 +146,6 @@ def build_history_text(history):
         lines.append("◆ ASSISTANT")
         lines.append(turn["assistant"])
         lines.append("")
-        lines.append("────────────────────────────")
-        lines.append("")
 
     return "\n".join(lines).strip()
 
