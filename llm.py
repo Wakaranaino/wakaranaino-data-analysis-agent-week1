@@ -76,7 +76,7 @@ Rules:
 - Do not keep invalid or misspelled field names
 - For yfinance, use 'Close' by default and never assume 'Adj Close' exists
 - If no timeframe is given, use a recent default period
-- If formatting with :.2f, convert arrays/Series to scalars first
+- If formatting with :.2f, first convert Series/ndarray values to a scalar (e.g. .item(), float(), or .iloc[0])
 - Use matplotlib for plots and call plt.show()
 """
 
@@ -116,12 +116,12 @@ Rules:
 - Return ONLY corrected Python code
 - No markdown or explanations
 - Prefer simple, robust code
-- Use the error as the main signal
+- Use the error as the main signal; if it mentions Series.__format__ or ndarray.__format__, convert the value to a scalar before printing
 - Inspect available columns before selecting fields
 - Replace invalid field names with the closest valid one when justified
 - Do not preserve broken or misspelled names
 - For yfinance, use 'Close' by default and never assume 'Adj Close' exists
-- If formatting with :.2f, convert arrays/Series to scalars first
+- If formatting with :.2f, first convert Series/ndarray values to a scalar (e.g. .item(), float(), or .iloc[0])
 - If the error mentions Adj Close, switch to Close
 - Avoid unnecessary imports or complex logic
 """
