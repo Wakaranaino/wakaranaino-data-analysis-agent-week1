@@ -75,6 +75,58 @@ def explain_code_ui(code):
     return explain_code(code)
 
 
+custom_js = """
+function () {
+  function attachHistoryAutoScroll() {
+    const textarea = document.querySelector('#history-textbox textarea');
+    if (!textarea || textarea.dataset.autoscrollAttached === '1') return;
+
+    textarea.dataset.autoscrollAttached = '1';
+    let lastValue = textarea.value;
+
+    const scrollToBottom = () => {
+      textarea.scrollTop = textarea.scrollHeight;
+    };
+
+    const checkForUpdate = () => {
+      const current = document.querySelector('#history-textbox textarea');
+      if (!current) return;
+
+      if (current !== textarea) {
+        attachHistoryAutoScroll();
+        return;
+      }
+
+      if (current.value !== lastValue) {
+        lastValue = current.value;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            current.scrollTop = current.scrollHeight;
+          });
+        });
+      }
+    };
+
+    const observer = new MutationObserver(checkForUpdate);
+    observer.observe(textarea, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true
+    });
+
+    textarea.addEventListener('input', checkForUpdate);
+    setInterval(checkForUpdate, 400);
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', attachHistoryAutoScroll);
+  } else {
+    attachHistoryAutoScroll();
+  }
+}
+"""
+
 css = """
 .example-row {
     gap: 8px !important;
@@ -146,10 +198,9 @@ css = """
     font-weight: 600 !important;
     border-radius: 12px !important;
 }
-
 """
 
-with gr.Blocks(css=css) as demo:
+with gr.Blocks(css=css, js=custom_js) as demo:
     gr.Markdown("# AI Data Analysis Agent")
 
     history_state = gr.State([])
@@ -295,6 +346,7 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
