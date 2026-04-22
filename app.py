@@ -260,12 +260,13 @@ with gr.Blocks(css=css) as demo:
     new_chat_btn.click(
         fn=new_chat,
         outputs=[interpretation, history_state],
-        js=scroll_history_js,
-        show_progress="minimal"
+        show_progress="hidden"
+    ).then(
+        fn=None,
+        js=scroll_history_js
     )
 
     submit_btn.click(
-        js=scroll_history_js,
         fn=run_agent_ui,
         inputs=[prompt, history_state],
         outputs=[
@@ -282,10 +283,12 @@ with gr.Blocks(css=css) as demo:
             code_explanation
         ],
         show_progress="minimal"
+    ).then(
+        fn=None,
+        js=scroll_history_js
     )
 
     edit_run_btn.click(
-        js=scroll_history_js,
         fn=handle_edit_or_run,
         inputs=[edit_mode_state, code_output, history_state],
         outputs=[
@@ -300,16 +303,20 @@ with gr.Blocks(css=css) as demo:
             history_state
         ],
         show_progress="minimal"
+    ).then(
+        fn=None,
+        js=scroll_history_js
     )
 
     explain_code_btn.click(
         fn=explain_code_ui,
         inputs=[code_output],
         outputs=[code_explanation],
-        show_progress="minimal"
+        show_progress="hidden"
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
