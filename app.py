@@ -128,8 +128,9 @@ css = """
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin-bottom: 4px !important;
-    min-height: 28px !important;
+    margin-bottom: 0px !important;
+    min-height: 24px !important;
+    padding: 0 2px !important;
 }
 .history-title-row .history-label {
     font-size: 15px !important;
@@ -139,14 +140,14 @@ css = """
     padding: 0 !important;
     line-height: 1 !important;
 }
-#new-chat-btn {
-    min-height: 26px !important;
-    height: 26px !important;
-    min-width: 80px !important;
-    width: 80px !important;
+#clear-history-btn {
+    min-height: 22px !important;
+    height: 22px !important;
+    min-width: unset !important;
+    width: auto !important;
     padding: 0 10px !important;
-    font-size: 12px !important;
-    border-radius: 13px !important;
+    font-size: 11px !important;
+    border-radius: 11px !important;
     line-height: 1 !important;
 }
 """
@@ -180,9 +181,9 @@ with gr.Blocks(css=css) as demo:
             with gr.Row(elem_classes="history-title-row"):
                 gr.HTML('<span class="history-label">Conversation History</span>')
                 new_chat_btn = gr.Button(
-                    "New Chat",
+                    "Clear History",
                     variant="secondary",
-                    elem_id="new-chat-btn"
+                    elem_id="clear-history-btn"
                 )
 
             interpretation = gr.Textbox(
