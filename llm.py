@@ -5,7 +5,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 MODEL_SIMPLE = "llama-3.1-8b-instant"
-MODEL_COMPLEX = "llama-3.1-8b-instant"  # swap to "llama-3.1-70b-versatile" when ready to test
+MODEL_COMPLEX = "llama-3.3-70b-versatile"  # swap to "llama-3.1-70b-versatile" when ready to test
 
 API_TIMEOUT = 30
 
