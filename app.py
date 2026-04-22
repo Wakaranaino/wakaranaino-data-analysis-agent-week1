@@ -77,47 +77,13 @@ def explain_code_ui(code):
 
 custom_js = """
 function () {
-  function startHistoryAutoScroll() {
-    let textarea = null;
-    let lastValue = null;
-
-    function findTextarea() {
-      const current = document.querySelector('#history-textbox textarea');
-      if (current && current !== textarea) {
-        textarea = current;
-        lastValue = current.value;
-      }
-    }
-
-    function scrollToBottom() {
-      if (!textarea) return;
-      textarea.scrollTop = textarea.scrollHeight;
-    }
-
-    function check() {
-      findTextarea();
-      if (!textarea) return;
-
-      if (textarea.value !== lastValue) {
-        lastValue = textarea.value;
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            scrollToBottom();
-            setTimeout(scrollToBottom, 120);
-          });
-        });
-      }
-    }
-
-    findTextarea();
-    setInterval(check, 300);
+  function scrollHistoryToBottom() {
+    const ta = document.querySelector('#history-textbox textarea');
+    if (ta) ta.scrollTop = ta.scrollHeight;
   }
-
-  if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', startHistoryAutoScroll);
-  } else {
-    startHistoryAutoScroll();
-  }
+  // Run every 500ms — scrolling to bottom when already there is a no-op,
+  // so this is safe and reliable regardless of how Gradio updates the value.
+  setInterval(scrollHistoryToBottom, 500);
 }
 """
 
@@ -169,6 +135,9 @@ css = """
 }
 #history-wrap {
     position: relative;
+}
+#history-textbox textarea {
+    overflow-y: auto !important;
 }
 .history-panel-title {
     font-size: 15px !important;
