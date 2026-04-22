@@ -308,7 +308,7 @@ def run_agent(prompt: str, history: list | None = None):
         )
 
 
-def run_edited_code(prompt: str, code: str, history_state: list | None = None):
+def run_edited_code(code: str, history_state: list | None = None):
     try:
         if history_state is None:
             history_state = []
