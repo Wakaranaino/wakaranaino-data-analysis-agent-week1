@@ -261,7 +261,7 @@ with gr.Blocks(css=css) as demo:
         fn=new_chat,
         outputs=[interpretation, history_state],
         js=scroll_history_js,
-        show_progress="hidden"
+        show_progress="minimal"
     )
 
     submit_btn.click(
@@ -299,14 +299,14 @@ with gr.Blocks(css=css) as demo:
             plot_output,
             history_state
         ],
-        show_progress="hidden"
+        show_progress="minimal"
     )
 
     explain_code_btn.click(
         fn=explain_code_ui,
         inputs=[code_output],
         outputs=[code_explanation],
-        show_progress="hidden"
+        show_progress="minimal"
     )
 
 demo.launch(ssr_mode=False)
