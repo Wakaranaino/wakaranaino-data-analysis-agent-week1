@@ -18,49 +18,17 @@ def clear_prompt():
     return ""
 
 
-def _escape_html(text: str) -> str:
-    return (
-        (text or "")
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\n", "<br>")
-    )
-
-
-def render_history_html(history):
-    if not history:
-        return '<div class="history-scroll"></div>'
-
-    parts = ['<div class="history-scroll">']
-    for i, turn in enumerate(history, start=1):
-        user_text = _escape_html(turn.get("user", ""))
-        assistant_text = _escape_html(turn.get("assistant", ""))
-        parts.append(
-            f'<div class="history-turn">'
-            f'<div class="history-turn-sep">========== Turn {i} ==========</div>'
-            f'<div class="history-role">▶ USER</div>'
-            f'<div class="history-text">{user_text}</div>'
-            f'<div class="history-role">◆ ASSISTANT</div>'
-            f'<div class="history-text">{assistant_text}</div>'
-            f'</div>'
-        )
-    parts.append('</div>')
-    return ''.join(parts)
-
-
 def new_chat():
-    return render_history_html([]), []
+    return "", []
 
 
 def run_agent_ui(prompt, history_state):
     code, execution_output, run_status, interpretation, plot_output, updated_history = run_agent(prompt, history_state)
-    history_html = render_history_html(updated_history)
     return (
         code,
         execution_output,
         run_status,
-        history_html,
+        interpretation,
         plot_output,
         updated_history,
         "",
@@ -89,7 +57,6 @@ def handle_edit_or_run(edit_mode, code, history_state):
         code=code,
         history_state=history_state
     )
-    history_html = render_history_html(updated_history)
 
     return (
         code,
@@ -107,27 +74,6 @@ def handle_edit_or_run(edit_mode, code, history_state):
 def explain_code_ui(code):
     return explain_code(code)
 
-
-scroll_history_js = """
-(...args) => {
-  const scrollToBottom = () => {
-    const box = document.querySelector('#history-html-wrap .history-scroll');
-    if (box) {
-      box.scrollTop = box.scrollHeight;
-    }
-  };
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      scrollToBottom();
-      setTimeout(scrollToBottom, 180);
-      setTimeout(scrollToBottom, 360);
-    });
-  });
-
-  return args;
-}
-"""
 
 css = """
 .example-row {
@@ -200,35 +146,7 @@ css = """
     font-weight: 600 !important;
     border-radius: 12px !important;
 }
-#history-html-wrap {
-    margin-top: 0 !important;
-    border: 1px solid var(--border-color-primary) !important;
-    border-radius: 10px !important;
-    padding: 10px 12px !important;
-    background: var(--input-background-fill) !important;
-}
-#history-html-wrap .history-scroll {
-    height: 330px;
-    overflow-y: auto;
-    padding: 4px 6px 6px 2px;
-}
-.history-turn {
-    margin-bottom: 14px;
-}
-.history-turn-sep {
-    color: var(--body-text-color-subdued);
-    font-size: 13px;
-    margin-bottom: 8px;
-}
-.history-role {
-    font-weight: 600;
-    margin: 6px 0 4px 0;
-}
-.history-text {
-    line-height: 1.45;
-    margin-bottom: 8px;
-    word-break: break-word;
-}
+
 """
 
 with gr.Blocks(css=css) as demo:
@@ -257,10 +175,10 @@ with gr.Blocks(css=css) as demo:
 
         with gr.Column():
             with gr.Group(elem_id="history-wrap"):
-                gr.HTML('<div class="history-panel-title">Conversation History</div>')
-                interpretation = gr.HTML(
-                    value=render_history_html([]),
-                    elem_id="history-html-wrap"
+                interpretation = gr.Textbox(
+                    label="Conversation History",
+                    lines=12,
+                    elem_id="history-textbox"
                 )
                 new_chat_btn = gr.Button(
                     "Clear",
@@ -330,7 +248,6 @@ with gr.Blocks(css=css) as demo:
     new_chat_btn.click(
         fn=new_chat,
         outputs=[interpretation, history_state],
-        js=scroll_history_js,
         show_progress="hidden"
     )
 
@@ -350,7 +267,6 @@ with gr.Blocks(css=css) as demo:
             edit_run_btn,
             code_explanation
         ],
-        js=scroll_history_js,
         show_progress="hidden"
     )
 
@@ -368,7 +284,6 @@ with gr.Blocks(css=css) as demo:
             plot_output,
             history_state
         ],
-        js=scroll_history_js,
         show_progress="hidden"
     )
 
@@ -380,6 +295,7 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
