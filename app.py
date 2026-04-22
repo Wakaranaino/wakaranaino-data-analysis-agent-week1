@@ -75,18 +75,6 @@ def explain_code_ui(code):
     return explain_code(code)
 
 
-scroll_history_js = """
-(...args) => {
-  setTimeout(() => {
-    const textarea = document.querySelector('#history-textbox textarea');
-    if (textarea) {
-      textarea.scrollTop = textarea.scrollHeight;
-    }
-  }, 250);
-  return args;
-}
-"""
-
 css = """
 .example-row {
     gap: 8px !important;
@@ -261,9 +249,6 @@ with gr.Blocks(css=css) as demo:
         fn=new_chat,
         outputs=[interpretation, history_state],
         show_progress="hidden"
-    ).then(
-        fn=None,
-        js=scroll_history_js
     )
 
     submit_btn.click(
@@ -283,9 +268,6 @@ with gr.Blocks(css=css) as demo:
             code_explanation
         ],
         show_progress="minimal"
-    ).then(
-        fn=None,
-        js=scroll_history_js
     )
 
     edit_run_btn.click(
@@ -303,9 +285,6 @@ with gr.Blocks(css=css) as demo:
             history_state
         ],
         show_progress="minimal"
-    ).then(
-        fn=None,
-        js=scroll_history_js
     )
 
     explain_code_btn.click(
@@ -316,6 +295,7 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
