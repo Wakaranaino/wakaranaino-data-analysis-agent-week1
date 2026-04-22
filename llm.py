@@ -177,20 +177,22 @@ Code:
 Use this format:
 
 Purpose:
-1 to 2 short sentences on what the code does.
+1 to 2 short sentences on what the code does overall.
 
 Libraries used:
-List the main libraries and their role.
+List the main libraries and briefly say what each one is used for.
 
-Step-by-step:
-3 to 6 numbered steps explaining the main logic.
+Code walkthrough:
+Use 3 to 6 bullet points.
+For each bullet, include the relevant line number or line range, then explain what that part is doing.
+Use line ranges by code block when possible, not every single line.
 Mention variable names only when helpful.
 
 Output:
 1 short sentence on what the user will see.
 
 Keep it clear, practical, and not too chatty.
-Do not rewrite the code.
+Do not rewrite the full code.
 Do not use markdown code fences or asterisks.
 """
 
