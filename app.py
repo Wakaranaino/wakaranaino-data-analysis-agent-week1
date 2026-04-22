@@ -24,7 +24,8 @@ def _escape_html(text: str) -> str:
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
-        .replace("\\n"", "<br>")
+        .replace("
+", "<br>")
     )
 
 
@@ -368,6 +369,7 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
