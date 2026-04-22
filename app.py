@@ -95,38 +95,21 @@ css = """
 .action-row button {
     min-height: 42px !important;
 }
-.panel-wrap {
-    position: relative;
+.panel-action-row {
+    justify-content: flex-end !important;
+    margin-top: 8px !important;
 }
-.panel-button-wrap {
-    position: absolute !important;
-    right: 16px;
-    bottom: 14px;
-    z-index: 30;
-    width: auto !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: transparent !important;
-}
-.panel-btn {
+#edit-run-btn {
     width: 110px !important;
     min-width: 110px !important;
     border-radius: 14px !important;
 }
-
-.explain-btn-row {
-    justify-content: flex-end !important;
-    margin-top: 8px !important;
-}
-
 #explain-code-btn {
-    width: 140px !important;
-    min-width: 140px !important;
+    width: 145px !important;
+    min-width: 145px !important;
     border-radius: 14px !important;
 }
 """
-
 
 with gr.Blocks(css=css) as demo:
     gr.Markdown("# AI Data Analysis Agent")
@@ -173,33 +156,32 @@ with gr.Blocks(css=css) as demo:
 
     with gr.Row():
         with gr.Column():
-            with gr.Group(elem_classes="panel-wrap"):
-                code_output = gr.Code(
-                    label="Generated Python Code",
-                    language="python",
-                    lines=12,
-                    interactive=False
+            code_output = gr.Code(
+                label="Generated Python Code",
+                language="python",
+                lines=12,
+                interactive=False
+            )
+
+            with gr.Row(elem_classes="panel-action-row"):
+                edit_run_btn = gr.Button(
+                    "Edit",
+                    variant="secondary",
+                    elem_id="edit-run-btn"
                 )
-                with gr.Row(elem_classes="panel-button-wrap"):
-                    edit_run_btn = gr.Button(
-                        "Edit",
-                        variant="secondary",
-                        elem_classes="panel-btn"
-                    )
 
         with gr.Column():
-            with gr.Group(elem_classes="panel-wrap"):
-                code_explanation = gr.Textbox(
-                    label="Code Explanation",
-                    lines=12,
-                    interactive=False,
-                    placeholder="Click 'Explain Code' to see a structured explanation of the current code."
-                )
+            code_explanation = gr.Textbox(
+                label="Code Explanation",
+                lines=12,
+                interactive=False,
+                placeholder="Click 'Explain Code' to see a structured explanation of the current code."
+            )
 
-            with gr.Row(elem_classes="explain-btn-row"):
+            with gr.Row(elem_classes="panel-action-row"):
                 explain_code_btn = gr.Button(
                     "Explain Code",
-                    variant="secondary",
+                    variant="primary",
                     elem_id="explain-code-btn"
                 )
 
