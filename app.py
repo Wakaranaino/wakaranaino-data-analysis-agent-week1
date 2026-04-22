@@ -156,7 +156,7 @@ with gr.Blocks(css=css) as demo:
                 lines=14
             )
 
-   with gr.Group(elem_id="code-panel-wrap"):
+    with gr.Group(elem_id="code-panel-wrap"):
         code_output = gr.Code(
             label="Generated Python Code",
             language="python",
