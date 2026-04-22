@@ -116,6 +116,17 @@ css = """
 }
 """
 
+.explain-btn-row {
+    justify-content: flex-end !important;
+    margin-top: 8px !important;
+}
+
+#explain-code-btn {
+    width: 140px !important;
+    min-width: 140px !important;
+    border-radius: 14px !important;
+}
+
 with gr.Blocks(css=css) as demo:
     gr.Markdown("# AI Data Analysis Agent")
 
@@ -183,12 +194,13 @@ with gr.Blocks(css=css) as demo:
                     interactive=False,
                     placeholder="Click 'Explain Code' to see a structured explanation of the current code."
                 )
-                with gr.Row(elem_classes="panel-button-wrap"):
-                    explain_code_btn = gr.Button(
-                        "Explain Code",
-                        variant="secondary",
-                        elem_classes="panel-btn"
-                    )
+
+            with gr.Row(elem_classes="explain-btn-row"):
+                explain_code_btn = gr.Button(
+                    "Explain Code",
+                    variant="secondary",
+                    elem_id="explain-code-btn"
+                )
 
     run_status = gr.Textbox(
         label="Run Status",
