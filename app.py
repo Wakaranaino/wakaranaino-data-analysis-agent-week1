@@ -114,7 +114,6 @@ css = """
     min-width: 110px !important;
     border-radius: 14px !important;
 }
-"""
 
 .explain-btn-row {
     justify-content: flex-end !important;
@@ -126,6 +125,8 @@ css = """
     min-width: 140px !important;
     border-radius: 14px !important;
 }
+"""
+
 
 with gr.Blocks(css=css) as demo:
     gr.Markdown("# AI Data Analysis Agent")
