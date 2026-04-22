@@ -1,5 +1,6 @@
 import gradio as gr
 from executor import run_agent, run_edited_code
+from llm import explain_code
 
 EXAMPLE_PROMPTS = {
     "AAPL Trend": "Plot AAPL closing prices for the last 100 days",
@@ -29,7 +30,8 @@ def run_agent_ui(prompt, history_state):
         "",  # clear prompt
         False,  # edit_mode_state
         gr.update(interactive=False),
-        gr.update(value="Edit", variant="secondary")
+        gr.update(value="Edit", variant="secondary"),
+        ""  # clear code explanation on new run
     )
 
 
@@ -65,6 +67,10 @@ def handle_edit_or_run(edit_mode, code, history_state):
     )
 
 
+def explain_code_ui(code):
+    return explain_code(code)
+
+
 css = """
 .example-row {
     gap: 8px !important;
@@ -89,12 +95,10 @@ css = """
 .action-row button {
     min-height: 42px !important;
 }
-
-#code-panel-wrap {
+.panel-wrap {
     position: relative;
 }
-
-#edit-run-wrap {
+.panel-button-wrap {
     position: absolute !important;
     right: 16px;
     bottom: 14px;
@@ -105,8 +109,7 @@ css = """
     padding: 0 !important;
     background: transparent !important;
 }
-
-#edit-run-btn {
+.panel-btn {
     width: 110px !important;
     min-width: 110px !important;
     border-radius: 14px !important;
@@ -156,19 +159,36 @@ with gr.Blocks(css=css) as demo:
                 lines=14
             )
 
-    with gr.Group(elem_id="code-panel-wrap"):
-        code_output = gr.Code(
-            label="Generated Python Code",
-            language="python",
-            lines=12,
-            interactive=False
-        )
-        with gr.Row(elem_id="edit-run-wrap"):
-            edit_run_btn = gr.Button(
-                "Edit",
-                variant="secondary",
-                elem_id="edit-run-btn"
-            )
+    with gr.Row():
+        with gr.Column():
+            with gr.Group(elem_classes="panel-wrap"):
+                code_output = gr.Code(
+                    label="Generated Python Code",
+                    language="python",
+                    lines=12,
+                    interactive=False
+                )
+                with gr.Row(elem_classes="panel-button-wrap"):
+                    edit_run_btn = gr.Button(
+                        "Edit",
+                        variant="secondary",
+                        elem_classes="panel-btn"
+                    )
+
+        with gr.Column():
+            with gr.Group(elem_classes="panel-wrap"):
+                code_explanation = gr.Textbox(
+                    label="Code Explanation",
+                    lines=12,
+                    interactive=False,
+                    placeholder="Click 'Explain Code' to see a structured explanation of the current code."
+                )
+                with gr.Row(elem_classes="panel-button-wrap"):
+                    explain_code_btn = gr.Button(
+                        "Explain Code",
+                        variant="secondary",
+                        elem_classes="panel-btn"
+                    )
 
     run_status = gr.Textbox(
         label="Run Status",
@@ -198,7 +218,8 @@ with gr.Blocks(css=css) as demo:
             prompt,
             edit_mode_state,
             code_output,
-            edit_run_btn
+            edit_run_btn,
+            code_explanation
         ]
     )
 
@@ -216,6 +237,12 @@ with gr.Blocks(css=css) as demo:
             plot_output,
             history_state
         ]
+    )
+
+    explain_code_btn.click(
+        fn=explain_code_ui,
+        inputs=[code_output],
+        outputs=[code_explanation]
     )
 
 demo.launch(ssr_mode=False)
