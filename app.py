@@ -121,36 +121,14 @@ css = """
     min-width: 145px !important;
     border-radius: 14px !important;
 }
-#history-panel {
-    border: 1px solid var(--border-color-primary) !important;
-    border-radius: 12px !important;
-    background: var(--block-background-fill) !important;
-    overflow: hidden !important;
+#history-wrap {
+    position: relative;
 }
-.history-panel-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    padding: 10px 12px 8px 12px !important;
-    border-bottom: 1px solid var(--border-color-primary) !important;
-    background: var(--block-background-fill) !important;
-    gap: 10px !important;
-}
-.history-panel-title {
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    color: var(--body-text-color) !important;
-    line-height: 1.2 !important;
-    margin: 0 !important;
-}
-#history-clear-row {
-    display: flex !important;
-    justify-content: flex-end !important;
-    margin: -34px 12px 0 12px !important;
-    position: relative !important;
-    z-index: 2 !important;
-}
-#clear-history-btn {
+#history-wrap #clear-history-btn {
+    position: absolute !important;
+    top: 12px;
+    right: 14px;
+    z-index: 20;
     height: 24px !important;
     min-height: 24px !important;
     width: 78px !important;
@@ -161,19 +139,11 @@ css = """
     border-radius: 12px !important;
     line-height: 24px !important;
 }
-#history-body {
-    padding: 18px 12px 12px 12px !important;
+#history-wrap .gradio-textbox {
+    position: relative;
 }
-#history-body .gradio-textbox {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-}
-#history-body textarea {
-    border: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    padding: 0 !important;
+#history-wrap textarea {
+    padding-top: 0 !important;
 }
 """
 
@@ -202,19 +172,16 @@ with gr.Blocks(css=css) as demo:
                 clear_btn = gr.Button("Clear")
 
         with gr.Column():
-            with gr.Group(elem_id="history-panel"):
-                gr.HTML('<div class="history-panel-header"><span class="history-panel-title">Conversation History</span></div>')
-                with gr.Row(elem_id="history-clear-row"):
-                    new_chat_btn = gr.Button(
-                        "Clear",
-                        variant="secondary",
-                        elem_id="clear-history-btn"
-                    )
-                with gr.Group(elem_id="history-body"):
-                    interpretation = gr.Textbox(
-                        lines=12,
-                        show_label=False
-                    )
+            with gr.Group(elem_id="history-wrap"):
+                interpretation = gr.Textbox(
+                    label="Conversation History",
+                    lines=12
+                )
+                new_chat_btn = gr.Button(
+                    "Clear",
+                    variant="secondary",
+                    elem_id="clear-history-btn"
+                )
 
     with gr.Row():
         with gr.Column():
@@ -321,3 +288,4 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
