@@ -26,20 +26,19 @@ def run_agent_ui(prompt, history_state):
         interpretation,
         plot_output,
         updated_history,
-        "",          # clear prompt
-        False,       # edit_mode_state
+        "",  # clear prompt
+        False,  # edit_mode_state
         gr.update(interactive=False),
-        gr.update(value="Edit")
+        gr.update(value="Edit", variant="secondary")
     )
 
 
 def handle_edit_or_run(edit_mode, code, history_state):
-    # First click: switch into edit mode
     if not edit_mode:
         return (
             code,
             gr.update(interactive=True),
-            gr.update(value="Run"),
+            gr.update(value="Run", variant="primary"),
             True,
             gr.update(),
             gr.update(),
@@ -48,7 +47,6 @@ def handle_edit_or_run(edit_mode, code, history_state):
             history_state
         )
 
-    # Second click: run manually edited code
     execution_output, run_status, interpretation, plot_output, updated_history = run_edited_code(
         code=code,
         history_state=history_state
@@ -57,7 +55,7 @@ def handle_edit_or_run(edit_mode, code, history_state):
     return (
         code,
         gr.update(interactive=False),
-        gr.update(value="Edit"),
+        gr.update(value="Edit", variant="secondary"),
         False,
         execution_output,
         run_status,
@@ -91,9 +89,18 @@ css = """
 .action-row button {
     min-height: 42px !important;
 }
-.code-row {
-    align-items: end !important;
-    gap: 10px !important;
+#code-panel-wrap {
+    position: relative;
+    padding-bottom: 56px !important;
+}
+#edit-run-btn {
+    position: absolute !important;
+    right: 16px;
+    bottom: 14px;
+    width: 110px !important;
+    min-width: 110px !important;
+    z-index: 20;
+    border-radius: 14px !important;
 }
 """
 
@@ -140,16 +147,18 @@ with gr.Blocks(css=css) as demo:
                 lines=14
             )
 
-    with gr.Row(elem_classes="code-row"):
-        with gr.Column(scale=12):
-            code_output = gr.Code(
-                label="Generated Python Code",
-                language="python",
-                lines=12,
-                interactive=False
-            )
-        with gr.Column(scale=1, min_width=120):
-            edit_run_btn = gr.Button("Edit", variant="secondary")
+    with gr.Group(elem_id="code-panel-wrap"):
+        code_output = gr.Code(
+            label="Generated Python Code",
+            language="python",
+            lines=12,
+            interactive=False
+        )
+        edit_run_btn = gr.Button(
+            "Edit",
+            variant="secondary",
+            elem_id="edit-run-btn"
+        )
 
     run_status = gr.Textbox(
         label="Run Status",
