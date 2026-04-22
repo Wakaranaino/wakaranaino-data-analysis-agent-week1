@@ -126,7 +126,7 @@ css = """
 }
 #history-wrap #clear-history-btn {
     position: absolute !important;
-    top: 8px;
+    top: 7px;
     right: 14px;
     z-index: 20;
     height: 24px !important;
@@ -135,7 +135,7 @@ css = """
     min-width: 78px !important;
     max-width: 78px !important;
     padding: 0 !important;
-    font-size: 15px !important;
+    font-size: 12px !important;
     border-radius: 12px !important;
     line-height: 24px !important;
     font-weight: 600 !important;
