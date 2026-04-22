@@ -174,29 +174,38 @@ Explain this Python code in clear plain English for a beginner.
 Code:
 {code}
 
-Use this format:
+Return plain text only.
+
+Use exactly this format:
 
 Purpose:
-1 to 2 short sentences on what the code does overall.
+1 to 2 short sentences.
 
 Libraries used:
-List the main libraries and briefly say what each one is used for.
+library name - short purpose
+library name - short purpose
 
 Code walkthrough:
-Use 3 to 6 bullet points.
-For each bullet, include the relevant line number or line range, then explain what that part is doing.
-Use line ranges by code block when possible, not every single line.
-Mention variable names only when helpful.
+1. Lines X-Y: short explanation
+2. Lines X-Y: short explanation
+3. Lines X-Y: short explanation
+4. Lines X-Y: short explanation
 
 Output:
-1 short sentence on what the user will see.
+1 short sentence.
 
-Keep it clear, practical, and not too chatty.
-Do not rewrite the full code.
-Do not use markdown code fences or asterisks.
+Rules:
+- No markdown symbols
+- No asterisks
+- No bullet symbols
+- Use numbered steps only in Code walkthrough
+- Put line numbers at the beginning of each step
+- Keep explanations concise and practical
+- Use line ranges by block, not every single line
+- Do not rewrite the code
 """
 
     return _post_chat([
-        {"role": "system", "content": "You explain Python code clearly for non-expert users."},
+        {"role": "system", "content": "You explain Python code clearly in plain text."},
         {"role": "user", "content": explanation_prompt}
     ])
