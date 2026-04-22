@@ -18,6 +18,11 @@ def clear_prompt():
     return ""
 
 
+def new_chat():
+    """Clears both the conversation history display and the memory state."""
+    return "", []
+
+
 def run_agent_ui(prompt, history_state):
     code, execution_output, run_status, interpretation, plot_output, updated_history = run_agent(prompt, history_state)
     return (
@@ -117,6 +122,33 @@ css = """
     min-width: 145px !important;
     border-radius: 14px !important;
 }
+
+/* Conversation history title row */
+.history-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 4px !important;
+    min-height: 28px !important;
+}
+.history-title-row .history-label {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: var(--body-text-color) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+#new-chat-btn {
+    min-height: 26px !important;
+    height: 26px !important;
+    min-width: 80px !important;
+    width: 80px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    border-radius: 13px !important;
+    line-height: 1 !important;
+}
 """
 
 with gr.Blocks(css=css) as demo:
@@ -144,9 +176,19 @@ with gr.Blocks(css=css) as demo:
                 clear_btn = gr.Button("Clear")
 
         with gr.Column():
+            # Manual title row: label on the left, New Chat button on the right
+            with gr.Row(elem_classes="history-title-row"):
+                gr.HTML('<span class="history-label">Conversation History</span>')
+                new_chat_btn = gr.Button(
+                    "New Chat",
+                    variant="secondary",
+                    elem_id="new-chat-btn"
+                )
+
             interpretation = gr.Textbox(
-                label="Conversation History",
-                lines=12
+                label="",        # label handled manually above
+                lines=12,
+                show_label=False
             )
 
     with gr.Row():
@@ -206,6 +248,12 @@ with gr.Blocks(css=css) as demo:
     clear_btn.click(
         fn=clear_prompt,
         outputs=prompt
+    )
+
+    # New Chat: clears both the display and the memory state
+    new_chat_btn.click(
+        fn=new_chat,
+        outputs=[interpretation, history_state]
     )
 
     submit_btn.click(
