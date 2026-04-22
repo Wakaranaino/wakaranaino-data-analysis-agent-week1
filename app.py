@@ -281,7 +281,7 @@ with gr.Blocks(css=css) as demo:
             edit_run_btn,
             code_explanation
         ],
-        show_progress="hidden"
+        show_progress="minimal"
     )
 
     edit_run_btn.click(
