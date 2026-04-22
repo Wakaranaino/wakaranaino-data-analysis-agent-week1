@@ -169,32 +169,29 @@ def explain_code(code: str) -> str:
         return "No code is available to explain yet."
 
     explanation_prompt = f"""
-Explain the following Python code in plain English.
+Explain this Python code in clear plain English for a beginner.
 
 Code:
 {code}
 
-Rules:
-- Use clear, simple English
-- Be structured and easy to scan
-- Do not rewrite the full code
-- Do not use markdown code fences
-- Keep it concise but useful
-- Use this structure:
+Use this format:
 
 Purpose:
-- Briefly explain what the code is trying to do
+1 to 2 short sentences on what the code does.
 
 Libraries used:
-- List the main libraries and what they are used for
+List the main libraries and their role.
 
 Step-by-step:
-1. Explain the first main step
-2. Explain the next main step
-3. Continue only as needed
+3 to 6 numbered steps explaining the main logic.
+Mention variable names only when helpful.
 
 Output:
-- Briefly explain what the user should expect to see
+1 short sentence on what the user will see.
+
+Keep it clear, practical, and not too chatty.
+Do not rewrite the code.
+Do not use markdown code fences or asterisks.
 """
 
     return _post_chat([
