@@ -65,7 +65,7 @@ def handle_edit_or_run(edit_mode, code, history_state):
         False,
         execution_output,
         run_status,
-        history_html,
+        interpretation,
         plot_output,
         updated_history
     )
