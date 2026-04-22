@@ -77,12 +77,21 @@ def explain_code_ui(code):
 
 scroll_history_js = """
 (...args) => {
-  setTimeout(() => {
+  const scrollToBottom = () => {
     const textarea = document.querySelector('#history-textbox textarea');
     if (textarea) {
       textarea.scrollTop = textarea.scrollHeight;
     }
-  }, 120);
+  };
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scrollToBottom();
+      setTimeout(scrollToBottom, 220);
+      setTimeout(scrollToBottom, 420);
+    });
+  });
+
   return args;
 }
 """
@@ -305,4 +314,5 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
