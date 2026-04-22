@@ -67,6 +67,20 @@ def validate_prompt(prompt: str):
     return True, ""
 
 
+def validate_code(code: str):
+    code_text = (code or "").strip()
+
+    if not code_text:
+        return False, "Code box is empty. Please generate or enter Python code first."
+
+    for rule in BLOCKED_RULES:
+        for pattern in rule["patterns"]:
+            if re.search(pattern, code_text, flags=re.IGNORECASE):
+                return False, rule["message"]
+
+    return True, ""
+
+
 def _execute_code_worker(code: str, queue: mp.Queue):
     import io
     import contextlib
@@ -149,6 +163,7 @@ def build_history_text(history):
 
     return "\n".join(lines).strip()
 
+
 def is_external_data_error(error_text: str) -> bool:
     external_error_keywords = [
         "YFRateLimitError",
@@ -166,6 +181,22 @@ def is_external_data_error(error_text: str) -> bool:
     ]
 
     return any(keyword in error_text for keyword in external_error_keywords)
+
+
+def _prepare_execution_artifacts(result):
+    img = None
+    if result["image_bytes"] is not None:
+        img = Image.open(io.BytesIO(result["image_bytes"]))
+
+    execution_output = result["output"]
+
+    if not execution_output.strip() and img is None:
+        execution_output = "Code executed successfully, but nothing was printed."
+    elif not execution_output.strip():
+        execution_output = "Plot generated successfully."
+
+    return execution_output, img
+
 
 def run_agent(prompt: str, history: list | None = None):
     try:
@@ -192,7 +223,6 @@ def run_agent(prompt: str, history: list | None = None):
 
         raw_code = generate_code(prompt, history=history)
         code = extract_python_code(raw_code)
-
 
         attempt = 0
         last_error = None
@@ -247,16 +277,7 @@ def run_agent(prompt: str, history: list | None = None):
 
             code = repair_code(prompt, code, last_error, history=history)
 
-        img = None
-        if result["image_bytes"] is not None:
-            img = Image.open(io.BytesIO(result["image_bytes"]))
-
-        execution_output = result["output"]
-
-        if not execution_output.strip() and img is None:
-            execution_output = "Code executed successfully, but nothing was printed."
-        elif not execution_output.strip():
-            execution_output = "Plot generated successfully."
+        execution_output, img = _prepare_execution_artifacts(result)
 
         interpretation = interpret_result(prompt, code, execution_output, status, history=None)
 
@@ -281,6 +302,84 @@ def run_agent(prompt: str, history: list | None = None):
             "",
             f"System error: {str(e)}",
             "System/API error",
+            history_text,
+            None,
+            updated_history
+        )
+
+
+def run_edited_code(prompt: str, code: str, history_state: list | None = None):
+    try:
+        if history_state is None:
+            history_state = []
+
+        is_valid, validation_message = validate_code(code)
+        if not is_valid:
+            updated_history = history_state + [{
+                "user": prompt or "[Manual code run]",
+                "assistant": "Edited code blocked. See Execution Output for details.",
+                "success": False
+            }]
+            history_text = build_history_text(updated_history)
+
+            return (
+                validation_message,
+                "Blocked edited code",
+                history_text,
+                None,
+                updated_history
+            )
+
+        result = execute_code_with_timeout(code, EXEC_TIMEOUT)
+
+        if not result["success"]:
+            error_text = result["error"] or "Unknown execution error."
+            updated_history = history_state + [{
+                "user": prompt or "[Manual code run]",
+                "assistant": "Edited code failed. See Execution Output for details.",
+                "success": False
+            }]
+            history_text = build_history_text(updated_history)
+
+            return (
+                f"Execution error: {error_text}",
+                "Edited code failed",
+                history_text,
+                None,
+                updated_history
+            )
+
+        execution_output, img = _prepare_execution_artifacts(result)
+        status = "Executed edited code"
+
+        interpretation = interpret_result(prompt, code, execution_output, status, history=None)
+
+        updated_history = history_state + [{
+            "user": prompt or "[Manual code run]",
+            "assistant": interpretation,
+            "success": True
+        }]
+        history_text = build_history_text(updated_history)
+
+        return (
+            execution_output,
+            status,
+            history_text,
+            img,
+            updated_history
+        )
+
+    except Exception as e:
+        updated_history = (history_state or []) + [{
+            "user": prompt or "[Manual code run]",
+            "assistant": "Edited code failed due to a system error. See Execution Output for details.",
+            "success": False
+        }]
+        history_text = build_history_text(updated_history)
+
+        return (
+            f"System error: {str(e)}",
+            "Edited code system error",
             history_text,
             None,
             updated_history
