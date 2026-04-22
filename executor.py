@@ -313,10 +313,12 @@ def run_edited_code(code: str, history_state: list | None = None):
         if history_state is None:
             history_state = []
 
+        manual_label = "[Manual Edit Run]"
+
         is_valid, validation_message = validate_code(code)
         if not is_valid:
             updated_history = history_state + [{
-                "user": prompt or "[Manual code run]",
+                "user": manual_label,
                 "assistant": "Edited code blocked. See Execution Output for details.",
                 "success": False
             }]
@@ -335,7 +337,7 @@ def run_edited_code(code: str, history_state: list | None = None):
         if not result["success"]:
             error_text = result["error"] or "Unknown execution error."
             updated_history = history_state + [{
-                "user": prompt or "[Manual code run]",
+                "user": manual_label,
                 "assistant": "Edited code failed. See Execution Output for details.",
                 "success": False
             }]
@@ -352,10 +354,10 @@ def run_edited_code(code: str, history_state: list | None = None):
         execution_output, img = _prepare_execution_artifacts(result)
         status = "Executed edited code"
 
-        interpretation = interpret_result(prompt, code, execution_output, status, history=None)
+        interpretation = interpret_result(manual_label, code, execution_output, status, history=None)
 
         updated_history = history_state + [{
-            "user": prompt or "[Manual code run]",
+            "user": manual_label,
             "assistant": interpretation,
             "success": True
         }]
@@ -370,8 +372,9 @@ def run_edited_code(code: str, history_state: list | None = None):
         )
 
     except Exception as e:
+        manual_label = "[Manual Edit Run]"
         updated_history = (history_state or []) + [{
-            "user": prompt or "[Manual code run]",
+            "user": manual_label,
             "assistant": "Edited code failed due to a system error. See Execution Output for details.",
             "success": False
         }]
