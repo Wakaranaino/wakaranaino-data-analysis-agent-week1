@@ -80,6 +80,83 @@ def validate_code(code: str):
 
     return True, ""
 
+def detect_request_features(prompt: str) -> dict:
+    prompt_lower = (prompt or "").lower()
+
+    return {
+        "needs_chart": any(k in prompt_lower for k in ["plot", "chart", "graph", "visualize"]),
+        "needs_compare": any(k in prompt_lower for k in ["compare", "vs", "versus", "both", "difference"]),
+        "needs_time_series": any(k in prompt_lower for k in ["monthly", "daily", "trend", "return", "over time"]),
+        "needs_stat_test": any(k in prompt_lower for k in ["t-test", "ttest", "anova", "significant", "p-value", "hypothesis"]),
+        "needs_descriptive": any(k in prompt_lower for k in ["mean", "median", "std", "standard deviation", "min", "max", "summary", "statistics"]),
+        "needs_monthly_return": "monthly return" in prompt_lower or "monthly returns" in prompt_lower,
+    }
+
+
+def validate_generated_code(prompt: str, code: str, features: dict):
+    issues = []
+    code_lower = (code or "").lower()
+
+    if features["needs_chart"]:
+        has_plot = any(k in code_lower for k in ["plt.plot", "plt.bar", "plt.scatter", ".plot("])
+        if not has_plot:
+            issues.append("The user requested a chart, but the code does not appear to create one.")
+
+    if features["needs_compare"]:
+        ticker_mentions = re.findall(r'["\']([A-Z]{1,10})["\']', code)
+        unique_tickers = set(ticker_mentions)
+        if len(unique_tickers) < 2:
+            issues.append("The user requested a comparison, but the code does not clearly use at least two datasets or tickers.")
+
+    if features["needs_stat_test"]:
+        has_test = any(k in code_lower for k in [
+            "ttest_ind", "ttest_rel", "mannwhitneyu", "anova", "f_oneway",
+            "pearsonr", "spearmanr", "linregress", "chi2"
+        ])
+        if not has_test:
+            issues.append("The user requested a statistical test, but the code does not appear to run one.")
+
+    # High-impact semantic check: monthly return order
+    if features["needs_monthly_return"]:
+        if "pct_change()" in code_lower and "resample(" in code_lower:
+            pct_idx = code_lower.find("pct_change()")
+            resample_idx = code_lower.find("resample(")
+            if pct_idx != -1 and resample_idx != -1 and pct_idx < resample_idx:
+                issues.append(
+                    "For monthly returns, the code appears to compute pct_change() before resampling. "
+                    "Monthly returns should usually be calculated from resampled monthly prices first, then pct_change()."
+                )
+
+    if issues:
+        return False, " ".join(issues)
+    return True, ""
+
+
+def validate_execution_result(prompt: str, code: str, result: dict, features: dict):
+    issues = []
+
+    output_text = (result.get("output") or "").lower()
+    has_image = result.get("image_bytes") is not None
+
+    if features["needs_chart"] and not has_image:
+        issues.append("The user requested a chart, but no plot image was generated.")
+
+    # Broad empty / meaningless output checks
+    if "count    0.0" in output_text or "count 0.0" in output_text:
+        issues.append("The output suggests the result has zero valid observations.")
+
+    if "all        nan" in output_text or "all nan" in output_text:
+        issues.append("The output suggests the computed values are all NaN.")
+
+    if features["needs_stat_test"]:
+        has_t_stat = ("t-stat" in output_text) or ("t statistic" in output_text) or ("t-statistic" in output_text)
+        has_p_val = ("p-value" in output_text) or ("p value" in output_text) or ("p_val" in output_text)
+        if not (has_t_stat and has_p_val):
+            issues.append("The user requested a statistical test, but the output does not clearly include both a test statistic and p-value.")
+
+    if issues:
+        return False, " ".join(issues)
+    return True, ""
 
 def _execute_code_worker(code: str, queue: mp.Queue):
     import io
@@ -223,6 +300,11 @@ def run_agent(prompt: str, history: list | None = None):
 
         raw_code = generate_code(prompt, history=history)
         code = extract_python_code(raw_code)
+        features = detect_request_features(prompt)
+
+        is_code_ok, code_check_message = validate_generated_code(prompt, code, features)
+        if not is_code_ok:
+            code = repair_code(prompt, code, code_check_message, history=history)
 
         attempt = 0
         last_error = None
@@ -231,16 +313,42 @@ def run_agent(prompt: str, history: list | None = None):
             result = execute_code_with_timeout(code, EXEC_TIMEOUT)
 
             if result["success"]:
-                if attempt == 0:
-                    status = "Executed on first try"
-                else:
-                    status = f"Fixed and executed on retry (attempt {attempt})"
-                break
+                is_result_ok, result_check_message = validate_execution_result(prompt, code, result, features)
+
+                if is_result_ok:
+                    if attempt == 0:
+                        status = "Executed on first try"
+                    else:
+                        status = f"Fixed and executed on retry (attempt {attempt})"
+                    break
+
+                last_error = f"Post-execution validation failed: {result_check_message}"
+                attempt += 1
+
+                if attempt >= MAX_ATTEMPTS:
+                    updated_history = history + [{
+                        "user": prompt,
+                        "assistant": "Request failed. See Execution Output for details.",
+                        "success": False
+                    }]
+                    history_text = build_history_text(updated_history)
+                    execution_output, img = _prepare_execution_artifacts(result)
+
+                    return (
+                        code,
+                        f"{execution_output}\n\nValidation issue: {result_check_message}",
+                        "Validation failed",
+                        history_text,
+                        img,
+                        updated_history
+                    )
+
+                code = repair_code(prompt, code, result_check_message, history=history)
+                continue
 
             last_error = result["error"]
             attempt += 1
 
-            # Do not retry code repair for external/API/data-source failures
             if is_external_data_error(last_error):
                 updated_history = history + [{
                     "user": prompt,
