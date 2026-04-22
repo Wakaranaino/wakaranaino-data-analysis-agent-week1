@@ -18,17 +18,50 @@ def clear_prompt():
     return ""
 
 
+def _escape_html(text: str) -> str:
+    return (
+        (text or "")
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("
+", "<br>")
+    )
+
+
+def render_history_html(history):
+    if not history:
+        return '<div class="history-scroll"></div>'
+
+    parts = ['<div class="history-scroll">']
+    for i, turn in enumerate(history, start=1):
+        user_text = _escape_html(turn.get("user", ""))
+        assistant_text = _escape_html(turn.get("assistant", ""))
+        parts.append(
+            f'<div class="history-turn">'
+            f'<div class="history-turn-sep">========== Turn {i} ==========</div>'
+            f'<div class="history-role">▶ USER</div>'
+            f'<div class="history-text">{user_text}</div>'
+            f'<div class="history-role">◆ ASSISTANT</div>'
+            f'<div class="history-text">{assistant_text}</div>'
+            f'</div>'
+        )
+    parts.append('</div>')
+    return ''.join(parts)
+
+
 def new_chat():
-    return "", []
+    return render_history_html([]), []
 
 
 def run_agent_ui(prompt, history_state):
     code, execution_output, run_status, interpretation, plot_output, updated_history = run_agent(prompt, history_state)
+    history_html = render_history_html(updated_history)
     return (
         code,
         execution_output,
         run_status,
-        interpretation,
+        history_html,
         plot_output,
         updated_history,
         "",
@@ -57,6 +90,7 @@ def handle_edit_or_run(edit_mode, code, history_state):
         code=code,
         history_state=history_state
     )
+    history_html = render_history_html(updated_history)
 
     return (
         code,
@@ -65,7 +99,7 @@ def handle_edit_or_run(edit_mode, code, history_state):
         False,
         execution_output,
         run_status,
-        interpretation,
+        history_html,
         plot_output,
         updated_history
     )
@@ -76,23 +110,21 @@ def explain_code_ui(code):
 
 
 scroll_history_js = """
-(...args) => {
+() => {
   const scrollToBottom = () => {
-    const textarea = document.querySelector('#history-textbox textarea');
-    if (textarea) {
-      textarea.scrollTop = textarea.scrollHeight;
+    const box = document.querySelector('#history-html-wrap .history-scroll');
+    if (box) {
+      box.scrollTop = box.scrollHeight;
     }
   };
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       scrollToBottom();
-      setTimeout(scrollToBottom, 220);
-      setTimeout(scrollToBottom, 420);
+      setTimeout(scrollToBottom, 180);
+      setTimeout(scrollToBottom, 360);
     });
   });
-
-  return args;
 }
 """
 
@@ -157,15 +189,34 @@ css = """
     max-width: 78px !important;
     padding: 0 !important;
     font-size: 13px !important;
-    border-radius: 12px !important;
     line-height: 24px !important;
     font-weight: 600 !important;
+    border-radius: 12px !important;
 }
-#history-wrap .gradio-textbox {
-    position: relative;
+#history-html-wrap {
+    margin-top: 0 !important;
 }
-#history-wrap textarea {
-    padding-top: 0 !important;
+#history-html-wrap .history-scroll {
+    height: 330px;
+    overflow-y: auto;
+    padding: 4px 6px 6px 2px;
+}
+.history-turn {
+    margin-bottom: 14px;
+}
+.history-turn-sep {
+    color: var(--body-text-color-subdued);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+.history-role {
+    font-weight: 600;
+    margin: 6px 0 4px 0;
+}
+.history-text {
+    line-height: 1.45;
+    margin-bottom: 8px;
+    word-break: break-word;
 }
 """
 
@@ -195,10 +246,10 @@ with gr.Blocks(css=css) as demo:
 
         with gr.Column():
             with gr.Group(elem_id="history-wrap"):
-                interpretation = gr.Textbox(
+                interpretation = gr.HTML(
+                    value=render_history_html([]),
                     label="Conversation History",
-                    lines=12,
-                    elem_id="history-textbox"
+                    elem_id="history-html-wrap"
                 )
                 new_chat_btn = gr.Button(
                     "Clear",
@@ -268,11 +319,11 @@ with gr.Blocks(css=css) as demo:
     new_chat_btn.click(
         fn=new_chat,
         outputs=[interpretation, history_state],
-        js=scroll_history_js
+        js=scroll_history_js,
+        show_progress="hidden"
     )
 
     submit_btn.click(
-        js=scroll_history_js,
         fn=run_agent_ui,
         inputs=[prompt, history_state],
         outputs=[
@@ -287,11 +338,12 @@ with gr.Blocks(css=css) as demo:
             code_output,
             edit_run_btn,
             code_explanation
-        ]
+        ],
+        js=scroll_history_js,
+        show_progress="hidden"
     )
 
     edit_run_btn.click(
-        js=scroll_history_js,
         fn=handle_edit_or_run,
         inputs=[edit_mode_state, code_output, history_state],
         outputs=[
@@ -304,15 +356,19 @@ with gr.Blocks(css=css) as demo:
             interpretation,
             plot_output,
             history_state
-        ]
+        ],
+        js=scroll_history_js,
+        show_progress="hidden"
     )
 
     explain_code_btn.click(
         fn=explain_code_ui,
         inputs=[code_output],
-        outputs=[code_explanation]
+        outputs=[code_explanation],
+        show_progress="hidden"
     )
 
 demo.launch(ssr_mode=False)
+
 
 
