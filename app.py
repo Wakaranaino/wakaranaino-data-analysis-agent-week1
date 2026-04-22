@@ -312,7 +312,4 @@ with gr.Blocks(css=css) as demo:
     </script>
     """)
 
- demo.launch(ssr_mode=False)
-
-
-
+demo.launch(ssr_mode=False)
