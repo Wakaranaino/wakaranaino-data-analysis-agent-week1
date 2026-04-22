@@ -232,6 +232,7 @@ Use numbered items.
 Start with Line X: or Lines X-Y:
 Use the shown line numbers.
 Explain what the code does.
+Do not repeat the comments, explain the code with accessble language 
 
 Output:
 1 short sentence.
