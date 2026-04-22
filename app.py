@@ -126,7 +126,7 @@ css = """
 }
 #history-wrap #clear-history-btn {
     position: absolute !important;
-    top: 12px;
+    top: 8px;
     right: 14px;
     z-index: 20;
     height: 24px !important;
@@ -135,9 +135,10 @@ css = """
     min-width: 78px !important;
     max-width: 78px !important;
     padding: 0 !important;
-    font-size: 11px !important;
+    font-size: 15px !important;
     border-radius: 12px !important;
     line-height: 24px !important;
+    font-weight: 600 !important;
 }
 #history-wrap .gradio-textbox {
     position: relative;
@@ -288,4 +289,5 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
