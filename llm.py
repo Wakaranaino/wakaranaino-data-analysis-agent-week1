@@ -161,3 +161,43 @@ Rules:
         {"role": "system", "content": "You explain data analysis results clearly and briefly."},
         {"role": "user", "content": interpretation_prompt}
     ])
+
+def explain_code(code: str) -> str:
+    code = (code or "").strip()
+
+    if not code:
+        return "No code is available to explain yet."
+
+    explanation_prompt = f"""
+Explain the following Python code in plain English.
+
+Code:
+{code}
+
+Rules:
+- Use clear, simple English
+- Be structured and easy to scan
+- Do not rewrite the full code
+- Do not use markdown code fences
+- Keep it concise but useful
+- Use this structure:
+
+Purpose:
+- Briefly explain what the code is trying to do
+
+Libraries used:
+- List the main libraries and what they are used for
+
+Step-by-step:
+1. Explain the first main step
+2. Explain the next main step
+3. Continue only as needed
+
+Output:
+- Briefly explain what the user should expect to see
+"""
+
+    return _post_chat([
+        {"role": "system", "content": "You explain Python code clearly for non-expert users."},
+        {"role": "user", "content": explanation_prompt}
+    ])
