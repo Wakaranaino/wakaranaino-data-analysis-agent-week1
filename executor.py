@@ -14,8 +14,8 @@ from llm import (
     extract_python_code,
 )
 
-EXEC_TIMEOUT = 20
-MAX_ATTEMPTS = 3  # 1 original + 1 retry
+EXEC_TIMEOUT = 35
+MAX_ATTEMPTS = 3  # 1 original + 2 retry
 
 BLOCKED_RULES = [
     {
