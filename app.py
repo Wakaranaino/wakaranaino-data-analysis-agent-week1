@@ -96,8 +96,16 @@ css = """
     min-height: 42px !important;
 }
 .panel-action-row {
+    display: flex !important;
     justify-content: flex-end !important;
+    align-items: center !important;
     margin-top: 8px !important;
+    gap: 0 !important;
+}
+.panel-action-row > * {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: none !important;
 }
 #edit-run-btn {
     width: 110px !important;
