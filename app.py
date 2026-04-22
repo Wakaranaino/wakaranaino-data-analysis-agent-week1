@@ -75,33 +75,15 @@ def explain_code_ui(code):
     return explain_code(code)
 
 
-custom_js = """
-function () {
-  function scrollHistoryToBottom() {
+scroll_history_js = """
+(...args) => {
+  setTimeout(() => {
     const textarea = document.querySelector('#history-textbox textarea');
     if (textarea) {
       textarea.scrollTop = textarea.scrollHeight;
     }
-  }
-
-  const start = () => {
-    scrollHistoryToBottom();
-
-    const observer = new MutationObserver(scrollHistoryToBottom);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
-
-    setInterval(scrollHistoryToBottom, 400);
-  };
-
-  if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
-  }
+  }, 120);
+  return args;
 }
 """
 
@@ -156,7 +138,7 @@ css = """
 }
 #history-wrap #clear-history-btn {
     position: absolute !important;
-    top: 8px;
+    top: 7px;
     right: 14px;
     z-index: 20;
     height: 24px !important;
@@ -165,7 +147,7 @@ css = """
     min-width: 78px !important;
     max-width: 78px !important;
     padding: 0 !important;
-    font-size: 15px !important;
+    font-size: 13px !important;
     border-radius: 12px !important;
     line-height: 24px !important;
     font-weight: 600 !important;
@@ -178,7 +160,7 @@ css = """
 }
 """
 
-with gr.Blocks(css=css, js=custom_js) as demo:
+with gr.Blocks(css=css) as demo:
     gr.Markdown("# AI Data Analysis Agent")
 
     history_state = gr.State([])
@@ -276,10 +258,12 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     new_chat_btn.click(
         fn=new_chat,
-        outputs=[interpretation, history_state]
+        outputs=[interpretation, history_state],
+        js=scroll_history_js
     )
 
     submit_btn.click(
+        js=scroll_history_js,
         fn=run_agent_ui,
         inputs=[prompt, history_state],
         outputs=[
@@ -298,6 +282,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
     edit_run_btn.click(
+        js=scroll_history_js,
         fn=handle_edit_or_run,
         inputs=[edit_mode_state, code_output, history_state],
         outputs=[
@@ -320,3 +305,4 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
