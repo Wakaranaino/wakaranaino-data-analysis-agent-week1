@@ -70,6 +70,7 @@ Rules:
 - No markdown or explanations
 - Use only: pandas, matplotlib, yfinance, scipy, numpy
 - Prefer simple, direct, robust code
+- For tasks comparing multiple tickers, download each ticker separately instead of using a combined download
 - Print results clearly
 - Inspect available columns before selecting fields
 - Match the user's intended meaning, not just exact wording
@@ -116,6 +117,7 @@ Rules:
 - Return ONLY corrected Python code
 - No markdown or explanations
 - Prefer simple, robust code
+- For tasks comparing multiple tickers, download each ticker separately instead of using a combined download
 - Use the error as the main signal; if it mentions Series.__format__ or ndarray.__format__, convert the value to a scalar before printing
 - Inspect available columns before selecting fields
 - Replace invalid field names with the closest valid one when justified
