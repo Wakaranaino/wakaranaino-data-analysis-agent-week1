@@ -89,17 +89,26 @@ css = """
 .action-row button {
     min-height: 42px !important;
 }
+
 #code-panel-wrap {
     position: relative;
-    padding-bottom: 56px !important;
 }
-#edit-run-btn {
+
+#edit-run-wrap {
     position: absolute !important;
     right: 16px;
     bottom: 14px;
+    z-index: 30;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+#edit-run-btn {
     width: 110px !important;
     min-width: 110px !important;
-    z-index: 20;
     border-radius: 14px !important;
 }
 """
@@ -147,18 +156,19 @@ with gr.Blocks(css=css) as demo:
                 lines=14
             )
 
-    with gr.Group(elem_id="code-panel-wrap"):
+   with gr.Group(elem_id="code-panel-wrap"):
         code_output = gr.Code(
             label="Generated Python Code",
             language="python",
             lines=12,
             interactive=False
         )
-        edit_run_btn = gr.Button(
-            "Edit",
-            variant="secondary",
-            elem_id="edit-run-btn"
-        )
+        with gr.Row(elem_id="edit-run-wrap"):
+            edit_run_btn = gr.Button(
+                "Edit",
+                variant="secondary",
+                elem_id="edit-run-btn"
+            )
 
     run_status = gr.Textbox(
         label="Run Status",
