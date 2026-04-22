@@ -22,7 +22,7 @@ Rules:
 - Use ticker.history(period=...) per ticker; never yf.download([list])
 - Use 'Close' only, never 'Adj Close'
 - Default period: 3mo if not specified
-- Convert to scalar before :.2f formatting: float(val) or val.item()
+- Convert to scalar before :.4f formatting: float(val) or val.item()
 - Print results with clear labels
 - Call plt.tight_layout() and plt.show()"""
 
@@ -41,7 +41,7 @@ Structure rules:
 - Align or merge data only after each ticker is downloaded and verified
 - Compute statistics or returns after alignment
 - Run any statistical test last, after all data is ready
-- Convert to scalar before :.2f formatting: float(val) or val.item()
+- Convert to scalar before :.4f formatting: float(val) or val.item()
 - For monthly resampling use resample('ME'), not 'M'
 - Print all results with clear labels; call plt.tight_layout() and plt.show()"""
 
