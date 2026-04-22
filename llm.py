@@ -191,13 +191,10 @@ library - purpose
 
 Code walkthrough:
 Use numbered items.
-Start each item with:
-Line X:
-or
-Lines X-Y:
-Choose naturally.
-Explain key logic only.
-Use given line numbers only.
+Start with Line X: or Lines X-Y:
+Use the shown line numbers.
+Explain what the code does.
+Use comments only as context.
 
 Output:
 1 short sentence.
