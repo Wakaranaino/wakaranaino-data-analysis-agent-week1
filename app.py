@@ -77,52 +77,46 @@ def explain_code_ui(code):
 
 custom_js = """
 function () {
-  function attachHistoryAutoScroll() {
-    const textarea = document.querySelector('#history-textbox textarea');
-    if (!textarea || textarea.dataset.autoscrollAttached === '1') return;
+  function startHistoryAutoScroll() {
+    let textarea = null;
+    let lastValue = null;
 
-    textarea.dataset.autoscrollAttached = '1';
-    let lastValue = textarea.value;
-
-    const scrollToBottom = () => {
-      textarea.scrollTop = textarea.scrollHeight;
-    };
-
-    const checkForUpdate = () => {
+    function findTextarea() {
       const current = document.querySelector('#history-textbox textarea');
-      if (!current) return;
-
-      if (current !== textarea) {
-        attachHistoryAutoScroll();
-        return;
-      }
-
-      if (current.value !== lastValue) {
+      if (current && current !== textarea) {
+        textarea = current;
         lastValue = current.value;
+      }
+    }
+
+    function scrollToBottom() {
+      if (!textarea) return;
+      textarea.scrollTop = textarea.scrollHeight;
+    }
+
+    function check() {
+      findTextarea();
+      if (!textarea) return;
+
+      if (textarea.value !== lastValue) {
+        lastValue = textarea.value;
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            current.scrollTop = current.scrollHeight;
+            scrollToBottom();
+            setTimeout(scrollToBottom, 120);
           });
         });
       }
-    };
+    }
 
-    const observer = new MutationObserver(checkForUpdate);
-    observer.observe(textarea, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true
-    });
-
-    textarea.addEventListener('input', checkForUpdate);
-    setInterval(checkForUpdate, 400);
+    findTextarea();
+    setInterval(check, 300);
   }
 
   if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', attachHistoryAutoScroll);
+    window.addEventListener('DOMContentLoaded', startHistoryAutoScroll);
   } else {
-    attachHistoryAutoScroll();
+    startHistoryAutoScroll();
   }
 }
 """
