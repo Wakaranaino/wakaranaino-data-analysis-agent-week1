@@ -24,8 +24,7 @@ def _escape_html(text: str) -> str:
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
-        .replace("
-", "<br>")
+        .replace("\n", "<br>")
     )
 
 
