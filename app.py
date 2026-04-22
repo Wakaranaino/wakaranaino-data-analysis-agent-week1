@@ -126,7 +126,7 @@ css = """
 }
 #history-wrap #clear-history-btn {
     position: absolute !important;
-    top: 7px;
+    top: 8px;
     right: 14px;
     z-index: 20;
     height: 24px !important;
@@ -135,7 +135,7 @@ css = """
     min-width: 78px !important;
     max-width: 78px !important;
     padding: 0 !important;
-    font-size: 12px !important;
+    font-size: 15px !important;
     border-radius: 12px !important;
     line-height: 24px !important;
     font-weight: 600 !important;
@@ -176,7 +176,8 @@ with gr.Blocks(css=css) as demo:
             with gr.Group(elem_id="history-wrap"):
                 interpretation = gr.Textbox(
                     label="Conversation History",
-                    lines=12
+                    lines=12,
+                    elem_id="history-textbox"
                 )
                 new_chat_btn = gr.Button(
                     "Clear",
@@ -288,6 +289,30 @@ with gr.Blocks(css=css) as demo:
         outputs=[code_explanation]
     )
 
-demo.launch(ssr_mode=False)
+    gr.HTML("""
+    <script>
+    (function () {
+      function scrollHistoryToBottom() {
+        const textarea = document.querySelector('#history-textbox textarea');
+        if (textarea) {
+          textarea.scrollTop = textarea.scrollHeight;
+        }
+      }
+
+      const observer = new MutationObserver(scrollHistoryToBottom);
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+
+      window.addEventListener('load', scrollHistoryToBottom);
+      setInterval(scrollHistoryToBottom, 500);
+    })();
+    </script>
+    """)
+
+ demo.launch(ssr_mode=False)
+
 
 
