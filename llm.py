@@ -168,41 +168,42 @@ def explain_code(code: str) -> str:
     if not code:
         return "No code is available to explain yet."
 
+    lines = code.splitlines()
+    numbered_code = "\n".join(
+        f"{i+1}. {line}" for i, line in enumerate(lines)
+    )
+
     explanation_prompt = f"""
-Explain this Python code in clear plain English for a beginner.
+Explain this numbered Python code for a beginner.
 
 Code:
-{code}
+{numbered_code}
 
 Return plain text only.
 
-Use exactly this format:
+Format:
 
 Purpose:
-1 to 2 short sentences.
+1 short summary.
 
 Libraries used:
-library name - short purpose
-library name - short purpose
+library - purpose
 
 Code walkthrough:
-1. Lines X-Y: short explanation
-2. Lines X-Y: short explanation
-3. Lines X-Y: short explanation
-4. Lines X-Y: short explanation
+Use numbered items.
+Start each item with:
+Line X:
+or
+Lines X-Y:
+Choose naturally.
+Explain key logic only.
+Use given line numbers only.
 
 Output:
 1 short sentence.
 
-Rules:
-- No markdown symbols
-- No asterisks
-- No bullet symbols
-- Use numbered steps only in Code walkthrough
-- Put line numbers at the beginning of each step
-- Keep explanations concise and practical
-- Use line ranges by block, not every single line
-- Do not rewrite the code
+Keep concise.
+No markdown symbols.
 """
 
     return _post_chat([
