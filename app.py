@@ -75,6 +75,36 @@ def explain_code_ui(code):
     return explain_code(code)
 
 
+custom_js = """
+function () {
+  function scrollHistoryToBottom() {
+    const textarea = document.querySelector('#history-textbox textarea');
+    if (textarea) {
+      textarea.scrollTop = textarea.scrollHeight;
+    }
+  }
+
+  const start = () => {
+    scrollHistoryToBottom();
+
+    const observer = new MutationObserver(scrollHistoryToBottom);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    setInterval(scrollHistoryToBottom, 400);
+  };
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+}
+"""
+
 css = """
 .example-row {
     gap: 8px !important;
@@ -148,7 +178,7 @@ css = """
 }
 """
 
-with gr.Blocks(css=css) as demo:
+with gr.Blocks(css=css, js=custom_js) as demo:
     gr.Markdown("# AI Data Analysis Agent")
 
     history_state = gr.State([])
@@ -288,28 +318,5 @@ with gr.Blocks(css=css) as demo:
         inputs=[code_output],
         outputs=[code_explanation]
     )
-
-    gr.HTML("""
-    <script>
-    (function () {
-      function scrollHistoryToBottom() {
-        const textarea = document.querySelector('#history-textbox textarea');
-        if (textarea) {
-          textarea.scrollTop = textarea.scrollHeight;
-        }
-      }
-
-      const observer = new MutationObserver(scrollHistoryToBottom);
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true
-      });
-
-      window.addEventListener('load', scrollHistoryToBottom);
-      setInterval(scrollHistoryToBottom, 500);
-    })();
-    </script>
-    """)
 
 demo.launch(ssr_mode=False)
