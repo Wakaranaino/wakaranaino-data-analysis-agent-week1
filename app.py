@@ -109,7 +109,7 @@ def explain_code_ui(code):
 
 
 scroll_history_js = """
-() => {
+(...args) => {
   const scrollToBottom = () => {
     const box = document.querySelector('#history-html-wrap .history-scroll');
     if (box) {
@@ -124,6 +124,8 @@ scroll_history_js = """
       setTimeout(scrollToBottom, 360);
     });
   });
+
+  return args;
 }
 """
 
@@ -176,6 +178,12 @@ css = """
 #history-wrap {
     position: relative;
 }
+.history-panel-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: var(--body-text-color) !important;
+    margin: 0 0 10px 0 !important;
+}
 #history-wrap #clear-history-btn {
     position: absolute !important;
     top: 7px;
@@ -194,6 +202,10 @@ css = """
 }
 #history-html-wrap {
     margin-top: 0 !important;
+    border: 1px solid var(--border-color-primary) !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    background: var(--input-background-fill) !important;
 }
 #history-html-wrap .history-scroll {
     height: 330px;
@@ -245,9 +257,9 @@ with gr.Blocks(css=css) as demo:
 
         with gr.Column():
             with gr.Group(elem_id="history-wrap"):
+                gr.HTML('<div class="history-panel-title">Conversation History</div>')
                 interpretation = gr.HTML(
                     value=render_history_html([]),
-                    label="Conversation History",
                     elem_id="history-html-wrap"
                 )
                 new_chat_btn = gr.Button(
@@ -368,6 +380,7 @@ with gr.Blocks(css=css) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
