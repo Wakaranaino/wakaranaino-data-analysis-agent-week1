@@ -32,11 +32,11 @@ def run_agent_ui(prompt, history_state):
         interpretation,
         plot_output,
         updated_history,
-        "",  # clear prompt
-        False,  # edit_mode_state
+        "",
+        False,
         gr.update(interactive=False),
         gr.update(value="Edit", variant="secondary"),
-        ""  # clear code explanation on new run
+        ""
     )
 
 
@@ -123,16 +123,34 @@ css = """
     border-radius: 14px !important;
 }
 
-/* Conversation history title row */
+/* Tighten gap between title row and textbox */
+#history-col {
+    gap: 4px !important;
+}
+
+/* Title row layout */
 .history-title-row {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin-bottom: 0px !important;
-    min-height: 24px !important;
+    margin: 0 !important;
     padding: 0 2px !important;
+    min-height: 24px !important;
+    gap: 0 !important;
 }
-.history-title-row .history-label {
+
+/* Override Gradio's default flex:1 on row children */
+.history-title-row > div {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: unset !important;
+    padding: 0 !important;
+}
+.history-title-row > div:first-child {
+    flex: 1 1 auto !important;
+}
+
+.history-label {
     font-size: 15px !important;
     font-weight: 600 !important;
     color: var(--body-text-color) !important;
@@ -140,15 +158,18 @@ css = """
     padding: 0 !important;
     line-height: 1 !important;
 }
+
+/* Fixed-width small pill button */
 #clear-history-btn {
-    min-height: 22px !important;
     height: 22px !important;
-    min-width: unset !important;
-    width: auto !important;
-    padding: 0 10px !important;
+    min-height: 22px !important;
+    width: 70px !important;
+    min-width: 70px !important;
+    max-width: 70px !important;
+    padding: 0 !important;
     font-size: 11px !important;
     border-radius: 11px !important;
-    line-height: 1 !important;
+    line-height: 22px !important;
 }
 """
 
@@ -176,18 +197,15 @@ with gr.Blocks(css=css) as demo:
                 submit_btn = gr.Button("Submit", variant="primary")
                 clear_btn = gr.Button("Clear")
 
-        with gr.Column():
-            # Manual title row: label on the left, New Chat button on the right
+        with gr.Column(elem_id="history-col"):
             with gr.Row(elem_classes="history-title-row"):
                 gr.HTML('<span class="history-label">Conversation History</span>')
                 new_chat_btn = gr.Button(
-                    "Clear History",
+                    "Clear",
                     variant="secondary",
                     elem_id="clear-history-btn"
                 )
-
             interpretation = gr.Textbox(
-                label="",        # label handled manually above
                 lines=12,
                 show_label=False
             )
@@ -246,12 +264,8 @@ with gr.Blocks(css=css) as demo:
     ex3.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["IBM Stats"]), outputs=prompt)
     ex4.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["Same for NVDA"]), outputs=prompt)
 
-    clear_btn.click(
-        fn=clear_prompt,
-        outputs=prompt
-    )
+    clear_btn.click(fn=clear_prompt, outputs=prompt)
 
-    # New Chat: clears both the display and the memory state
     new_chat_btn.click(
         fn=new_chat,
         outputs=[interpretation, history_state]
