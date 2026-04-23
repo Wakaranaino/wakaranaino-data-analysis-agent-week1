@@ -85,6 +85,13 @@ def explain_code_ui(code):
     return explain_code(code)
 
 
+def handle_clear_csv_ui():
+    # csv_ui.handle_clear_csv currently returns:
+    # (file_reset, csv_state, file_name, rows, cols, missing, basic, groups, missing_info, preview, accordion)
+    # UploadButton has no file-value output to reset, so we drop the first element here.
+    return handle_clear_csv()[1:]
+
+
 custom_js = """
 function () {
   function scrollHistoryToBottom() {
@@ -492,28 +499,22 @@ css = """
     border: 1px solid #e4e8f0 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    padding: 4px !important;
+    padding: 6px 8px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-    min-height: 58px !important;
-    overflow: hidden !important;
-}
-#csv-upload .file-preview,
-#csv-upload .file-preview-holder {
     min-height: 0 !important;
 }
-#csv-upload .file-drop {
-    display: none !important;
+#csv-upload button {
+    min-height: 32px !important;
+    height: 32px !important;
+    border-radius: 9px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
 }
-#csv-upload::after {
-    content: "Click Upload CSV to select a file";
-    display: block;
-    margin: 4px 6px 2px !important;
+#csv-upload-hint p {
+    margin: 4px 2px 0 2px !important;
     font-size: 11px !important;
     color: #6b7280 !important;
-    line-height: 1.2 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
 }
 /* Keep top cards visually aligned after uploader compaction */
 .left-pane,
@@ -550,12 +551,13 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 submit_btn = gr.Button("Submit", variant="primary")
                 clear_btn = gr.Button("Clear")
 
-            csv_file = gr.File(
-                label="Upload CSV",
+            csv_file = gr.UploadButton(
+                "Upload CSV",
                 file_types=[".csv"],
                 file_count="single",
                 elem_id="csv-upload"
             )
+            gr.Markdown("Click Upload CSV to select a file", elem_id="csv-upload-hint")
 
         with gr.Column(elem_classes="right-pane"):
             with gr.Group(elem_id="history-wrap"):
@@ -728,7 +730,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         show_progress="hidden"
     )
 
-    csv_file.change(
+    csv_file.upload(
         fn=handle_csv_upload,
         inputs=[csv_file],
         outputs=[
@@ -747,9 +749,8 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
     clear_csv_btn.click(
-        fn=handle_clear_csv,
+        fn=handle_clear_csv_ui,
         outputs=[
-            csv_file,
             csv_state,
             csv_file_name,
             csv_row_count,
