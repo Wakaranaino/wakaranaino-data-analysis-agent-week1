@@ -183,71 +183,87 @@ css = """
     background: linear-gradient(180deg, rgba(160, 192, 148, 0.07), rgba(255, 255, 255, 0.02)) !important;
     border: 1px solid rgba(146, 180, 132, 0.5) !important;
     border-radius: 12px !important;
-    padding: 10px !important;
-    font-size: 13px !important;
+    padding: 8px !important;
+    font-size: 12px !important;
+    overflow-x: auto !important;
 }
 .csv-sections-row {
+    display: grid !important;
+    grid-template-columns: 1.05fr 1.35fr 1fr 1.45fr !important;
     gap: 0 !important;
+    align-items: stretch !important;
+    min-width: 1120px !important;
 }
 .csv-section-col {
-    padding: 0 10px !important;
+    padding: 0 8px !important;
+    min-width: 0 !important;
 }
 .csv-section-col + .csv-section-col {
     border-left: 1px solid #d5ddcf !important;
 }
 .csv-section-title {
-    margin: 0 0 8px 0 !important;
-    font-size: 14px !important;
+    margin: 0 0 6px 0 !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
 }
 .csv-section-body {
-    max-height: 210px !important;
-    min-height: 210px !important;
+    max-height: 168px !important;
+    min-height: 168px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    font-size: 13px !important;
-    line-height: 1.35 !important;
+    font-size: 12px !important;
+    line-height: 1.28 !important;
 }
 .csv-overview-item {
-    margin: 0 0 8px 0 !important;
-    font-size: 13px !important;
+    margin: 0 0 6px 0 !important;
+    font-size: 12px !important;
 }
 .csv-overview-item:last-child {
     margin-bottom: 0 !important;
 }
+.csv-overview-item p {
+    margin: 0 !important;
+}
 .csv-section-body p,
 .csv-section-body li,
 .csv-section-body table {
-    font-size: 13px !important;
+    font-size: 12px !important;
 }
 .csv-section-body ul {
-    margin: 0 0 0 16px !important;
+    margin: 0 0 0 14px !important;
     padding: 0 !important;
 }
 .csv-preview-wrap {
-    max-height: 210px !important;
-    min-height: 210px !important;
+    max-height: 168px !important;
+    min-height: 168px !important;
     overflow: auto !important;
 }
 .csv-preview-wrap table {
-    font-size: 12px !important;
+    font-size: 11px !important;
 }
 .csv-actions-row {
-    margin-top: 10px !important;
+    margin-top: 8px !important;
     justify-content: flex-end !important;
+}
+.csv-actions-row > * {
+    flex: 0 0 auto !important;
+}
+.csv-actions-row button {
+    width: 132px !important;
+    min-width: 132px !important;
 }
 .csv-chip-wrap {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 3px;
 }
 .csv-chip {
     display: inline-block;
-    padding: 1px 7px;
+    padding: 1px 6px;
     border-radius: 999px;
     border: 1px solid #ffd68a;
     background: #fff7e6;
-    font-size: 11px;
+    font-size: 10px;
 }
 """
 
@@ -305,13 +321,13 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 with gr.Column(elem_classes="csv-section-col"):
                     gr.Markdown("### Overview", elem_classes="csv-section-title")
                     with gr.Column(elem_classes="csv-section-body"):
+                        csv_file_name = gr.Markdown("**File:** —", elem_classes="csv-overview-item")
                         csv_row_count = gr.Markdown("**Rows:** —", elem_classes="csv-overview-item")
                         csv_column_count = gr.Markdown("**Columns:** —", elem_classes="csv-overview-item")
-                        csv_file_name = gr.Markdown("**File:** —", elem_classes="csv-overview-item")
                         csv_missing_total = gr.Markdown("**Missing cells:** —", elem_classes="csv-overview-item")
 
                 with gr.Column(elem_classes="csv-section-col"):
-                    gr.Markdown("### Data Types", elem_classes="csv-section-title")
+                    gr.Markdown("### Data Types (by Column Groups)", elem_classes="csv-section-title")
                     with gr.Column(elem_classes="csv-section-body"):
                         csv_column_groups = gr.Markdown("")
                         csv_basic_info = gr.Markdown("", visible=False)
@@ -335,7 +351,8 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                         )
 
             with gr.Row(elem_classes="csv-actions-row"):
-                clear_csv_btn = gr.Button("Clear CSV", variant="secondary")
+                with gr.Column(scale=0, min_width=132):
+                    clear_csv_btn = gr.Button("Clear CSV", variant="secondary")
 
     with gr.Row():
         with gr.Column():
