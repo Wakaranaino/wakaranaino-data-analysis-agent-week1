@@ -228,6 +228,25 @@ css = """
     min-width: 145px !important;
     border-radius: 14px !important;
 }
+#code-explain-wrap {
+    position: relative;
+}
+#code-explain-wrap #explain-code-btn {
+    position: absolute !important;
+    top: 8px;
+    right: 10px;
+    z-index: 20;
+    height: 24px !important;
+    min-height: 24px !important;
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    line-height: 24px !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+}
 #history-wrap {
     position: relative;
 }
@@ -505,15 +524,14 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 )
 
         with gr.Column():
-            code_explanation = gr.Textbox(
-                label="Code Explanation",
-                lines=12,
-                interactive=False,
-                placeholder="Click 'Explain Code' to see a structured explanation of the current code.",
-                elem_id="code-explanation"
-            )
-
-            with gr.Row(elem_classes="panel-action-row"):
+            with gr.Group(elem_id="code-explain-wrap"):
+                code_explanation = gr.Textbox(
+                    label="Code Explanation",
+                    lines=12,
+                    interactive=False,
+                    placeholder="Click 'Explain Code' to see a structured explanation of the current code.",
+                    elem_id="code-explanation"
+                )
                 explain_code_btn = gr.Button(
                     "Explain Code",
                     variant="primary",
@@ -622,4 +640,5 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
