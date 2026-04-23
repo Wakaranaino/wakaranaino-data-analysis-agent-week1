@@ -27,7 +27,7 @@ def handle_csv_upload(file_obj) -> tuple[Any, ...]:
     - accordion update
     """
     empty_state = clear_dataset_session()
-    empty_preview: list[list[Any]] = []
+    empty_preview = gr.update(value=[["No preview available"]], headers=["Info"])
 
     if file_obj is None:
         return (
@@ -86,7 +86,7 @@ def handle_csv_upload(file_obj) -> tuple[Any, ...]:
         _build_basic_info(summary),
         _build_column_groups(summary),
         _build_missing_info(summary),
-        _build_preview_table(summary),
+        _build_preview_table_update(summary),
         gr.update(
             visible=True,
             open=True,
@@ -122,7 +122,7 @@ def handle_clear_csv() -> tuple[Any, ...]:
         "",
         "",
         "",
-        [],
+        gr.update(value=[["No preview available"]], headers=["Info"]),
         gr.update(
             visible=False,
             open=False,
@@ -168,52 +168,74 @@ def _build_csv_accordion_label(summary: dict[str, Any]) -> str:
 
 
 def _build_basic_info(summary: dict[str, Any]) -> str:
-    lines: list[str] = []
-    lines.append("Dataset Overview")
-    lines.append(f"- File name: {summary.get('file_name', 'uploaded.csv')}")
-    lines.append(f"- Rows: {summary.get('row_count', 0)}")
-    lines.append(f"- Columns: {summary.get('column_count', 0)}")
-    lines.append("")
-    lines.append("All Columns")
-    for col in summary.get("column_names", []):
-        lines.append(f"- {col}")
-    return "\n".join(lines).strip()
+    file_name = summary.get("file_name", "uploaded.csv")
+    row_count = summary.get("row_count", 0)
+    col_count = summary.get("column_count", 0)
+    numeric_count = len(summary.get("numeric_columns", []))
+    datetime_count = len(summary.get("datetime_columns", []))
+    categorical_count = len(summary.get("categorical_columns", []))
+
+    return (
+        "### Basic Info\n"
+        "\n"
+        "| Metric | Value |\n"
+        "| --- | --- |\n"
+        f"| File | `{file_name}` |\n"
+        f"| Rows | {row_count} |\n"
+        f"| Columns | {col_count} |\n"
+        f"| Numeric Columns | {numeric_count} |\n"
+        f"| Datetime Columns | {datetime_count} |\n"
+        f"| Categorical/Text Columns | {categorical_count} |"
+    )
 
 
 def _build_column_groups(summary: dict[str, Any]) -> str:
-    lines: list[str] = []
     numeric_cols = summary.get("numeric_columns", [])
     datetime_cols = summary.get("datetime_columns", [])
     categorical_cols = summary.get("categorical_columns", [])
+    numeric_text = _format_chip_group(numeric_cols)
+    datetime_text = _format_chip_group(datetime_cols)
+    categorical_text = _format_chip_group(categorical_cols)
 
-    lines.append("Column Groups")
-    lines.append(f"- Numeric ({len(numeric_cols)}): {', '.join(numeric_cols) if numeric_cols else 'None'}")
-    lines.append(f"- Datetime ({len(datetime_cols)}): {', '.join(datetime_cols) if datetime_cols else 'None'}")
-    lines.append(f"- Categorical/Text ({len(categorical_cols)}): {', '.join(categorical_cols) if categorical_cols else 'None'}")
-    return "\n".join(lines).strip()
+    return (
+        "### Column Groups\n"
+        "\n"
+        f"**Numeric ({len(numeric_cols)})**\n\n{numeric_text}\n\n"
+        f"**Datetime ({len(datetime_cols)})**\n\n{datetime_text}\n\n"
+        f"**Categorical/Text ({len(categorical_cols)})**\n\n{categorical_text}"
+    )
 
 
 def _build_missing_info(summary: dict[str, Any]) -> str:
-    lines: list[str] = []
     missing_counts = summary.get("missing_counts", {})
-    lines.append("Missing Values by Column")
+    row_count = max(int(summary.get("row_count", 0)), 1)
+    missing_columns = [(col, count) for col, count in missing_counts.items() if int(count) > 0]
+    missing_total = sum(int(count) for _, count in missing_columns)
 
-    if not missing_counts:
-        lines.append("- No missing-value summary available.")
-        return "\n".join(lines).strip()
+    if missing_total == 0:
+        return "### Missing Values\n\nNo missing values detected."
 
-    for col, count in missing_counts.items():
-        lines.append(f"- {col}: {count}")
+    lines = [
+        "### Missing Values",
+        "",
+        "| Column | Missing Count | Missing % |",
+        "| --- | ---: | ---: |",
+    ]
+
+    for col, count in missing_columns:
+        pct = (int(count) / row_count) * 100
+        lines.append(f"| `{col}` | {int(count)} | {pct:.2f}% |")
+
     return "\n".join(lines).strip()
 
 
-def _build_preview_table(summary: dict[str, Any]) -> list[list[Any]]:
+def _build_preview_table_update(summary: dict[str, Any]):
     rows: list[list[Any]] = []
     preview_records = summary.get("preview_records", [])
     columns = summary.get("column_names", [])
 
     if not preview_records:
-        return [["No preview available"]]
+        return gr.update(value=[["No preview available"]], headers=["Info"])
 
     if not columns and preview_records:
         columns = list(preview_records[0].keys())
@@ -221,5 +243,13 @@ def _build_preview_table(summary: dict[str, Any]) -> list[list[Any]]:
     for record in preview_records:
         rows.append([record.get(col) for col in columns])
 
-    return rows
+    return gr.update(value=rows, headers=columns)
+
+
+def _format_chip_group(columns: list[str]) -> str:
+    if not columns:
+        return "_None_"
+    chips = [f"<span class='csv-chip'>{col}</span>" for col in columns]
+    return "<div class='csv-chip-wrap'>" + " ".join(chips) + "</div>"
+
 
