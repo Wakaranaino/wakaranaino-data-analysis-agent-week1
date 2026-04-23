@@ -114,19 +114,31 @@ function () {
 """
 
 css = """
+:root {
+    --ui-bg: #f6f7f9;
+    --ui-card: #ffffff;
+    --ui-border: #e5e7eb;
+    --ui-muted: #6b7280;
+    --ui-title: #111827;
+    --ui-accent: #ea7a33;
+}
 .gradio-container {
-    max-width: 1360px !important;
+    max-width: 1200px !important;
     margin: 0 auto !important;
-    padding: 10px 14px 22px !important;
-    background: #f7f8fa !important;
+    padding: 10px 12px 18px !important;
+    background: var(--ui-bg) !important;
 }
 .gradio-container h1 {
-    font-size: 48px !important;
+    color: var(--ui-title) !important;
+    font-size: 52px !important;
     line-height: 1.05 !important;
-    font-weight: 700 !important;
+    margin-bottom: 4px !important;
     letter-spacing: -0.02em !important;
-    margin-bottom: 8px !important;
-    color: #1f2937 !important;
+}
+.app-subtitle p {
+    margin: 0 0 10px 0 !important;
+    font-size: 16px !important;
+    color: var(--ui-muted) !important;
 }
 .top-row {
     gap: 12px !important;
@@ -134,56 +146,52 @@ css = """
 }
 .left-pane,
 .right-pane {
-    border: 1px solid #e5e7eb !important;
+    background: var(--ui-card) !important;
+    border: 1px solid var(--ui-border) !important;
     border-radius: 12px !important;
-    background: #ffffff !important;
-    padding: 10px 12px !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
-}
-#prompt-input textarea,
-#history-textbox textarea,
-#execution-output textarea,
-#code-explanation textarea,
-#run-status textarea {
-    border-radius: 10px !important;
+    padding: 10px !important;
 }
 .example-row {
     gap: 8px !important;
-    margin-top: -2px !important;
+    margin-top: -6px !important;
     margin-bottom: 8px !important;
-    flex-wrap: nowrap !important;
+    flex-wrap: wrap !important;
 }
 .example-row button {
     min-width: unset !important;
     width: auto !important;
-    min-height: 33px !important;
-    height: 33px !important;
-    padding: 0 13px !important;
-    font-size: 13px !important;
-    border-radius: 16px !important;
-    border: 1px solid #e5e7eb !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 0 14px !important;
+    font-size: 14px !important;
+    border-radius: 18px !important;
+    border: 1px solid var(--ui-border) !important;
     background: #f3f4f6 !important;
     color: #1f2937 !important;
     flex: 0 0 auto !important;
 }
 .action-row {
-    margin-top: 0 !important;
+    margin-top: -2px !important;
     gap: 10px !important;
-    margin-bottom: 2px !important;
+    flex-wrap: nowrap !important;
 }
-.action-row button {
+.action-row > * {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+}
+.action-row button,
+.action-row .gr-button {
     min-height: 42px !important;
     border-radius: 12px !important;
-    font-size: 15px !important;
     font-weight: 600 !important;
 }
 .action-row button.primary {
-    background: #ea7a33 !important;
-    border-color: #ea7a33 !important;
+    background: var(--ui-accent) !important;
+    border-color: var(--ui-accent) !important;
 }
 .action-row button.primary:hover {
-    background: #dc6d27 !important;
-    border-color: #dc6d27 !important;
+    background: #db6a23 !important;
+    border-color: #db6a23 !important;
 }
 .panel-action-row {
     display: flex !important;
@@ -209,10 +217,12 @@ css = """
 }
 #history-wrap {
     position: relative;
-    min-height: 100%;
+    background: transparent !important;
+    border: 0 !important;
 }
 #history-textbox textarea {
     overflow-y: scroll !important;
+    border-radius: 10px !important;
 }
 .history-panel-title {
     font-size: 15px !important;
@@ -222,8 +232,8 @@ css = """
 }
 #history-wrap #clear-history-btn {
     position: absolute !important;
-    top: 8px;
-    right: 12px;
+    top: 7px;
+    right: 14px;
     z-index: 20;
     height: 24px !important;
     min-height: 24px !important;
@@ -246,22 +256,14 @@ css = """
 #code-output,
 #code-explanation,
 #run-status {
-    border: 1px solid #e5e7eb !important;
+    background: var(--ui-card) !important;
+    border: 1px solid var(--ui-border) !important;
     border-radius: 12px !important;
-    background: #ffffff !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
 }
-#plot-output .label-wrap,
-#execution-output .label-wrap,
-#code-output .label-wrap,
-#code-explanation .label-wrap,
-#run-status .label-wrap {
-    font-size: 14px !important;
-    font-weight: 600 !important;
-}
-.panel-action-row button.primary {
-    background: #ea7a33 !important;
-    border-color: #ea7a33 !important;
+#execution-output textarea,
+#code-explanation textarea,
+#run-status textarea {
+    border-radius: 10px !important;
 }
 .csv-summary-panel {
     background: linear-gradient(180deg, rgba(160, 192, 148, 0.07), rgba(255, 255, 255, 0.02)) !important;
@@ -352,10 +354,9 @@ css = """
 #csv-upload {
     margin-top: 6px !important;
     margin-bottom: 8px !important;
-    border: 1px solid #e5e7eb !important;
+    border: 1px solid var(--ui-border) !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
     padding: 8px !important;
 }
 #csv-upload .file-preview,
@@ -363,8 +364,7 @@ css = """
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 84px !important;
-    max-height: 96px !important;
+    min-height: 64px !important;
     padding: 8px 8px !important;
 }
 #csv-upload .file-drop .file-drop-text {
@@ -375,6 +375,7 @@ css = """
 
 with gr.Blocks(css=css, js=custom_js) as demo:
     gr.Markdown("# AI Data Analysis Agent")
+    gr.Markdown("Upload CSV data or ask questions to analyze datasets, run code, and visualize results.", elem_classes="app-subtitle")
 
     history_state = gr.State([])
     edit_mode_state = gr.State(False)
