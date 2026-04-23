@@ -315,7 +315,7 @@ Rules:
 - 2 to 4 sentences only
 - Focus on the final result
 - Mention the data/metric briefly if helpful
-- If the run needed fixing, mention that briefly at the end
+- Do not mention retries, fixing, attempts, or execution mechanics
 - Do not include code or debugging details
 - Do not repeat raw output verbatim"""
 
@@ -364,6 +364,8 @@ Keep concise. No markdown symbols."""
         {"role": "system", "content": "You explain Python code clearly in plain text."},
         {"role": "user", "content": explanation_prompt}
     ])
+
+
 
 
 
