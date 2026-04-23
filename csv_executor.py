@@ -3,12 +3,12 @@ from __future__ import annotations
 import io
 import traceback
 import multiprocessing as mp
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
 import pandas as pd
-from PIL import Image
 
 from llm import generate_csv_code, repair_csv_code, interpret_result
 
@@ -317,21 +317,21 @@ def _execute_csv_code_worker(code: str, df: pd.DataFrame, queue: mp.Queue):
         with contextlib.redirect_stdout(output_buffer):
             exec(code, globals_ctx)
 
-        image_bytes_list = []
+        image_paths = []
         if plt.get_fignums():
             for fig_num in plt.get_fignums():
                 fig = plt.figure(fig_num)
-                buf = io.BytesIO()
-                fig.savefig(buf, format="png", bbox_inches="tight")
-                buf.seek(0)
-                image_bytes_list.append(buf.getvalue())
+                with tempfile.NamedTemporaryFile(prefix="csv_analysis_plot_", suffix=".png", delete=False) as tmp:
+                    fig.savefig(tmp.name, format="png", bbox_inches="tight")
+                    image_paths.append(tmp.name)
             plt.close("all")
 
         queue.put({
             "success": True,
             "output": output_buffer.getvalue(),
-            "image_bytes": image_bytes_list[0] if image_bytes_list else None,
-            "image_bytes_list": image_bytes_list,
+            "image_bytes": None,
+            "image_bytes_list": [],
+            "image_paths": image_paths,
             "error": None
         })
     except Exception:
@@ -341,6 +341,7 @@ def _execute_csv_code_worker(code: str, df: pd.DataFrame, queue: mp.Queue):
             "output": output_buffer.getvalue(),
             "image_bytes": None,
             "image_bytes_list": [],
+            "image_paths": [],
             "error": traceback.format_exc()
         })
 
@@ -359,6 +360,7 @@ def _execute_csv_code_with_timeout(code: str, df: pd.DataFrame, timeout: int = C
             "output": "",
             "image_bytes": None,
             "image_bytes_list": [],
+            "image_paths": [],
             "error": f"Execution timed out after {timeout} seconds."
         }
 
@@ -368,6 +370,7 @@ def _execute_csv_code_with_timeout(code: str, df: pd.DataFrame, timeout: int = C
             "output": "",
             "image_bytes": None,
             "image_bytes_list": [],
+            "image_paths": [],
             "error": "Execution failed without returning any result."
         }
 
@@ -375,14 +378,7 @@ def _execute_csv_code_with_timeout(code: str, df: pd.DataFrame, timeout: int = C
 
 
 def _prepare_csv_execution_artifacts(result: dict[str, Any]) -> tuple[str, Any]:
-    images = []
-    image_bytes_list = result.get("image_bytes_list") or []
-
-    if image_bytes_list:
-        for image_bytes in image_bytes_list:
-            images.append(Image.open(io.BytesIO(image_bytes)))
-    elif result.get("image_bytes") is not None:
-        images.append(Image.open(io.BytesIO(result["image_bytes"])))
+    images = result.get("image_paths") or []
 
     execution_output = (result.get("output") or "").strip()
     if not execution_output and not images:
@@ -526,6 +522,7 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             [],
             updated_history
         )
+
 
 
 
