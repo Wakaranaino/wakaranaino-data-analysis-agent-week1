@@ -42,11 +42,6 @@ def render_history_html(history):
         assistant_text = assistant_text.replace("\n", "<br>")
         system_note = system_note.replace("\n", "<br>")
 
-        parts.append(
-            '<div class="history-row user-row">'
-            f'<div class="history-bubble user-bubble">{user_text}</div>'
-            "</div>"
-        )
         assistant_inner = assistant_text
         if system_note.strip():
             assistant_inner += (
@@ -58,6 +53,11 @@ def render_history_html(history):
         parts.append(
             '<div class="history-row assistant-row">'
             f'<div class="history-bubble assistant-bubble">{assistant_inner}</div>'
+            "</div>"
+        )
+        parts.append(
+            '<div class="history-row user-row">'
+            f'<div class="history-bubble user-bubble">{user_text}</div>'
             "</div>"
         )
     parts.append("</div>")
@@ -455,7 +455,7 @@ css = """
 #history-title-text {
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     line-height: 1.15 !important;
     font-weight: 500 !important;
     color: #6b7280 !important;
