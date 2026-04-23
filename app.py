@@ -272,6 +272,22 @@ css = """
     background: #fff7e6;
     font-size: 10px;
 }
+#csv-upload {
+    margin-top: 6px !important;
+    margin-bottom: 8px !important;
+}
+#csv-upload .file-preview,
+#csv-upload .file-preview-holder {
+    min-height: 0 !important;
+}
+#csv-upload .file-drop {
+    min-height: 120px !important;
+    padding: 10px 8px !important;
+}
+#csv-upload .file-drop .file-drop-text {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+}
 """
 
 with gr.Blocks(css=css, js=custom_js) as demo:
@@ -302,7 +318,8 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             csv_file = gr.File(
                 label="Upload CSV",
                 file_types=[".csv"],
-                file_count="single"
+                file_count="single",
+                elem_id="csv-upload"
             )
 
         with gr.Column():
@@ -506,19 +523,3 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
