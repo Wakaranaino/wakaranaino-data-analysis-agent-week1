@@ -396,7 +396,7 @@ css = """
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin: 0 !important;
+    margin: 0 0 -2px 0 !important;
     gap: 8px !important;
     background: transparent !important;
     border: none !important;
