@@ -149,39 +149,42 @@ Current user request:
 def generate_csv_code(prompt: str, dataset_summary: dict | None = None, history=None) -> str:
     history_text = format_history_for_prompt(history)
     summary = dataset_summary or {}
+    missing_counts = summary.get("missing_counts", {}) or {}
+    missing_top_k = sorted(
+        [(k, int(v)) for k, v in missing_counts.items() if int(v) > 0],
+        key=lambda x: x[1],
+        reverse=True
+    )[:8]
     summary_text = (
-        f"File: {summary.get('file_name', 'uploaded.csv')}\n"
-        f"Rows: {summary.get('row_count', 0)}\n"
-        f"Columns: {summary.get('column_count', 0)}\n"
-        f"Column names: {summary.get('column_names', [])}\n"
-        f"Numeric columns: {summary.get('numeric_columns', [])}\n"
-        f"Categorical columns: {summary.get('categorical_columns', [])}\n"
-        f"Categorical value samples: {summary.get('categorical_samples', {})}\n"
-        f"Missing counts: {summary.get('missing_counts', {})}\n"
+        f"- File: {summary.get('file_name', 'uploaded.csv')}\n"
+        f"- Rows: {summary.get('row_count', 0)}\n"
+        f"- Columns: {summary.get('column_count', 0)}\n"
+        f"- Numeric columns: {summary.get('numeric_columns', [])}\n"
+        f"- Categorical columns: {summary.get('categorical_columns', [])}\n"
+        f"- Categorical samples: {summary.get('categorical_samples', {})}\n"
+        f"- Missing counts (top): {missing_top_k}\n"
     )
 
     system_prompt = """You generate executable Python code for file-based data analysis.
-Return ONLY Python code. No markdown, no explanations.
+Return ONLY Python code. No markdown or explanations.
 
 Context:
-- A pandas DataFrame named df is already loaded and available.
+- A pandas DataFrame named df is already loaded.
 
 Rules:
-- Use only pandas, matplotlib, scipy, numpy.
-- Use df directly; do not read files unless explicitly requested.
+- Use only pandas, numpy, scipy, matplotlib.
+- Use df directly. Do not read files unless explicitly requested.
 - Do not fetch external/network data unless explicitly requested.
-- Implement only what the user asks.
-- Print labeled results when textual output is needed.
-- If plotting, call plt.tight_layout() and plt.show().
-- For text/category filtering, normalize with .astype(str).str.strip().str.lower().
-- For subgroup comparisons, print subgroup sizes before tests.
-- If an exact requested label is missing, use the closest available label from dataset samples and print which label was used.
-- Avoid returning meaningless statistical outputs (for example NaN t-statistic/p-value); handle empty groups explicitly."""
+- Follow user intent; infer reasonable defaults when request is underspecified.
+- For text filters, normalize with: .astype(str).str.strip().str.lower().
+- If you infer columns/groups, print a short "Assumptions Used" section.
+- For statistical comparisons, print subgroup sizes before running tests.
+- If plotting is requested, call plt.tight_layout() and plt.show()."""
 
     user_prompt = f"""Conversation history:
 {history_text}
 
-Dataset summary:
+Dataset profile:
 {summary_text}
 
 Current user request:
@@ -239,19 +242,15 @@ def repair_csv_code(
     history_text = format_history_for_prompt(history)
     summary = dataset_summary or {}
     summary_text = (
-        f"File: {summary.get('file_name', 'uploaded.csv')}\n"
-        f"Rows: {summary.get('row_count', 0)}\n"
-        f"Columns: {summary.get('column_count', 0)}\n"
-        f"Column names: {summary.get('column_names', [])}\n"
-        f"Numeric columns: {summary.get('numeric_columns', [])}\n"
-        f"Categorical columns: {summary.get('categorical_columns', [])}\n"
-        f"Categorical value samples: {summary.get('categorical_samples', {})}\n"
+        f"- Numeric columns: {summary.get('numeric_columns', [])}\n"
+        f"- Categorical columns: {summary.get('categorical_columns', [])}\n"
+        f"- Categorical samples: {summary.get('categorical_samples', {})}\n"
     )
 
     repair_prompt = f"""Conversation history:
 {history_text}
 
-Dataset summary:
+Dataset profile:
 {summary_text}
 
 Current user request:
@@ -260,29 +259,46 @@ Current user request:
 Failed code:
 {bad_code}
 
-Execution error:
+Execution/validation issue:
 {error_message}
 
-Fix the code.
-
-Rules:
-- Return ONLY corrected Python code
-- df is already loaded, use df directly
-- Do not fetch external data or use network APIs
-- Keep the fix minimal and focused on the error
-- Preserve the user's requested intent; do not add extra analyses unless needed to fix the error
-- For text/category filtering, normalize with .astype(str).str.strip().str.lower()
-- For subgroup comparisons, print subgroup sizes before tests
-- Do not return NaN statistical results; handle empty groups explicitly"""
+Fix rules:
+- Keep intent unchanged.
+- Keep fixes minimal and specific to the failure.
+- Use df directly; no file/network I/O unless explicitly requested.
+- If category filters are used, normalize labels robustly.
+- For multi-column stats, ensure output orientation is valid and readable."""
 
     raw = _post_chat(
         [
-            {"role": "system", "content": "You fix Python code for CSV dataframe analysis. Return ONLY corrected Python code."},
+            {"role": "system", "content": "You fix Python code for CSV dataframe analysis.\nReturn ONLY corrected Python code."},
             {"role": "user", "content": repair_prompt}
         ],
         model=MODEL_SIMPLE
     )
     return extract_python_code(raw)
+
+
+def interpret_csv_result(prompt: str, execution_output: str, status: str) -> str:
+    interpretation_prompt = f"""User request:
+{prompt}
+
+Execution output:
+{execution_output}
+
+Run status:
+{status}
+
+Write 2-4 sentences:
+- Summarize the result directly.
+- Mention key metric/test outcome.
+- If assumptions were inferred (columns/groups/labels), mention them briefly.
+- Do not repeat raw output or code."""
+
+    return _post_chat([
+        {"role": "system", "content": "You explain analysis results clearly and briefly."},
+        {"role": "user", "content": interpretation_prompt}
+    ])
 
 
 def interpret_result(prompt: str, code: str, execution_output: str, status: str, history=None) -> str:
@@ -350,5 +366,6 @@ Keep concise. No markdown symbols."""
         {"role": "system", "content": "You explain Python code clearly in plain text."},
         {"role": "user", "content": explanation_prompt}
     ])
+
 
 
