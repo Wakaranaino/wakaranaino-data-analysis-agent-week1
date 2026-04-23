@@ -821,7 +821,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         show_progress="hidden"
     )
 
-demo.launch(ssr_mode=False)
+demo.queue().launch(ssr_mode=False)
 
 
 
