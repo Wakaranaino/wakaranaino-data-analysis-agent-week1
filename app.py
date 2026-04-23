@@ -25,6 +25,31 @@ def new_chat():
     return "", []
 
 
+def set_run_busy():
+    return (
+        gr.update(visible=False),
+        gr.update(visible=True, value="Cancel", variant="secondary"),
+        True
+    )
+
+
+def set_run_idle():
+    return (
+        gr.update(visible=True, value="Submit", variant="primary"),
+        gr.update(visible=False),
+        False
+    )
+
+
+def cancel_current_run():
+    return (
+        gr.update(visible=True, value="Submit", variant="primary"),
+        gr.update(visible=False),
+        False,
+        "Run canceled by user."
+    )
+
+
 def run_agent_ui(prompt, history_state, csv_state):
     if csv_state and csv_state.get("active"):
         code, execution_output, run_status, interpretation, plot_output, updated_history = run_csv_agent(
@@ -439,12 +464,12 @@ css = """
     min-height: 168px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    font-size: 12px !important;
-    line-height: 1.28 !important;
+    font-size: 13px !important;
+    line-height: 1.34 !important;
 }
 .csv-overview-item {
     margin: 0 0 6px 0 !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
 }
 .csv-overview-item:last-child {
     margin-bottom: 0 !important;
@@ -455,7 +480,7 @@ css = """
 .csv-section-body p,
 .csv-section-body li,
 .csv-section-body table {
-    font-size: 12px !important;
+    font-size: 13px !important;
 }
 .csv-section-body ul {
     margin: 0 0 0 14px !important;
@@ -467,7 +492,7 @@ css = """
     overflow: auto !important;
 }
 .csv-preview-wrap table {
-    font-size: 11px !important;
+    font-size: 12px !important;
 }
 .csv-actions-row {
     margin-top: 8px !important;
@@ -477,8 +502,12 @@ css = """
     flex: 0 0 auto !important;
 }
 .csv-actions-row button {
-    width: 132px !important;
-    min-width: 132px !important;
+    width: 108px !important;
+    min-width: 108px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
 }
 .csv-chip-wrap {
     display: flex;
@@ -491,7 +520,7 @@ css = """
     border-radius: 999px;
     border: 1px solid #ffd68a;
     background: #fff7e6;
-    font-size: 10px;
+    font-size: 11px;
 }
 #csv-upload {
     margin-top: 6px !important;
@@ -529,6 +558,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     history_state = gr.State([])
     edit_mode_state = gr.State(False)
+    run_in_progress = gr.State(False)
     csv_state = gr.State(clear_dataset_session())
 
     with gr.Row(elem_classes="top-row"):
@@ -549,6 +579,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
             with gr.Row(elem_classes="action-row"):
                 submit_btn = gr.Button("Submit", variant="primary")
+                cancel_btn = gr.Button("Cancel", variant="secondary", visible=False)
                 clear_btn = gr.Button("Clear")
 
             csv_file = gr.UploadButton(
@@ -692,23 +723,43 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         show_progress="hidden"
     )
 
-    submit_btn.click(
-        fn=run_agent_ui,
-        inputs=[prompt, history_state, csv_state],
-        outputs=[
-            code_output,
-            execution_output,
-            run_status,
-            interpretation,
-            plot_output,
-            history_state,
-            prompt,
-            edit_mode_state,
-            code_output,
-            edit_run_btn,
-            code_explanation
-        ],
-        show_progress="minimal"
+    run_event = (
+        submit_btn.click(
+            fn=set_run_busy,
+            outputs=[submit_btn, cancel_btn, run_in_progress],
+            queue=False,
+            show_progress="hidden"
+        ).then(
+            fn=run_agent_ui,
+            inputs=[prompt, history_state, csv_state],
+            outputs=[
+                code_output,
+                execution_output,
+                run_status,
+                interpretation,
+                plot_output,
+                history_state,
+                prompt,
+                edit_mode_state,
+                code_output,
+                edit_run_btn,
+                code_explanation
+            ],
+            show_progress="minimal"
+        ).then(
+            fn=set_run_idle,
+            outputs=[submit_btn, cancel_btn, run_in_progress],
+            queue=False,
+            show_progress="hidden"
+        )
+    )
+
+    cancel_btn.click(
+        fn=cancel_current_run,
+        outputs=[submit_btn, cancel_btn, run_in_progress, run_status],
+        cancels=[run_event],
+        queue=False,
+        show_progress="hidden"
     )
 
     edit_run_btn.click(
