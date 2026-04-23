@@ -81,9 +81,28 @@ function () {
     const ta = document.querySelector('#history-textbox textarea');
     if (ta) ta.scrollTop = ta.scrollHeight;
   }
-  // Run every 500ms — scrolling to bottom when already there is a no-op,
-  // so this is safe and reliable regardless of how Gradio updates the value.
-  setInterval(scrollHistoryToBottom, 500);
+
+  // Gradio replaces the textarea element on each update,
+  // so we scroll at multiple points after the update settles.
+  function scheduledScroll() {
+    scrollHistoryToBottom();
+    setTimeout(scrollHistoryToBottom, 100);
+    setTimeout(scrollHistoryToBottom, 300);
+    setTimeout(scrollHistoryToBottom, 600);
+  }
+
+  // Watch the parent container for DOM changes (element replacement)
+  function attachObserver() {
+    const container = document.querySelector('#history-textbox');
+    if (!container) {
+      setTimeout(attachObserver, 500);
+      return;
+    }
+    const observer = new MutationObserver(scheduledScroll);
+    observer.observe(container, { childList: true, subtree: true });
+  }
+
+  attachObserver();
 }
 """
 
@@ -137,7 +156,7 @@ css = """
     position: relative;
 }
 #history-textbox textarea {
-    overflow-y: auto !important;
+    overflow-y: scroll !important;
 }
 .history-panel-title {
     font-size: 15px !important;
