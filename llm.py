@@ -146,6 +146,51 @@ Current user request:
     )
 
 
+def generate_csv_code(prompt: str, dataset_summary: dict | None = None, history=None) -> str:
+    history_text = format_history_for_prompt(history)
+    summary = dataset_summary or {}
+    summary_text = (
+        f"File: {summary.get('file_name', 'uploaded.csv')}\n"
+        f"Rows: {summary.get('row_count', 0)}\n"
+        f"Columns: {summary.get('column_count', 0)}\n"
+        f"Column names: {summary.get('column_names', [])}\n"
+        f"Numeric columns: {summary.get('numeric_columns', [])}\n"
+        f"Missing counts: {summary.get('missing_counts', {})}\n"
+    )
+
+    system_prompt = """You generate executable Python code for file-based data analysis.
+Return ONLY Python code. No markdown, no explanations.
+
+Context:
+- A pandas DataFrame named df is already loaded and available.
+
+Rules:
+- Use only pandas, matplotlib, scipy, numpy.
+- Use df directly; do not read files unless explicitly requested.
+- Do not fetch external/network data unless explicitly requested.
+- Implement only what the user asks.
+- Print labeled results when textual output is needed.
+- If plotting, call plt.tight_layout() and plt.show()."""
+
+    user_prompt = f"""Conversation history:
+{history_text}
+
+Dataset summary:
+{summary_text}
+
+Current user request:
+{prompt}"""
+
+    raw = _post_chat(
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        model=MODEL_SIMPLE
+    )
+    return extract_python_code(raw)
+
+
 def repair_code(prompt: str, bad_code: str, error_message: str, history=None) -> str:
     task_type = classify_task(prompt)
     history_text = format_history_for_prompt(history)
@@ -174,6 +219,57 @@ Fix the code.
             {"role": "user", "content": repair_prompt}
         ],
         model=model
+    )
+    return extract_python_code(raw)
+
+
+def repair_csv_code(
+    prompt: str,
+    bad_code: str,
+    error_message: str,
+    dataset_summary: dict | None = None,
+    history=None
+) -> str:
+    history_text = format_history_for_prompt(history)
+    summary = dataset_summary or {}
+    summary_text = (
+        f"File: {summary.get('file_name', 'uploaded.csv')}\n"
+        f"Rows: {summary.get('row_count', 0)}\n"
+        f"Columns: {summary.get('column_count', 0)}\n"
+        f"Column names: {summary.get('column_names', [])}\n"
+        f"Numeric columns: {summary.get('numeric_columns', [])}\n"
+    )
+
+    repair_prompt = f"""Conversation history:
+{history_text}
+
+Dataset summary:
+{summary_text}
+
+Current user request:
+{prompt}
+
+Failed code:
+{bad_code}
+
+Execution error:
+{error_message}
+
+Fix the code.
+
+Rules:
+- Return ONLY corrected Python code
+- df is already loaded, use df directly
+- Do not fetch external data or use network APIs
+- Keep the fix minimal and focused on the error
+- Preserve the user's requested intent; do not add extra analyses unless needed to fix the error"""
+
+    raw = _post_chat(
+        [
+            {"role": "system", "content": "You fix Python code for CSV dataframe analysis. Return ONLY corrected Python code."},
+            {"role": "user", "content": repair_prompt}
+        ],
+        model=MODEL_SIMPLE
     )
     return extract_python_code(raw)
 
@@ -243,3 +339,4 @@ Keep concise. No markdown symbols."""
         {"role": "system", "content": "You explain Python code clearly in plain text."},
         {"role": "user", "content": explanation_prompt}
     ])
+
