@@ -1,7 +1,7 @@
 import gradio as gr
 from executor import run_agent, run_edited_code
 from llm import explain_code
-from csv_ui import handle_csv_upload, handle_clear_csv, build_initial_csv_summary_text
+from csv_ui import handle_csv_upload, handle_clear_csv
 from csv_executor import clear_dataset_session
 
 EXAMPLE_PROMPTS = {
@@ -230,36 +230,24 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         open=False,
         visible=False
     ) as csv_summary_accordion:
-
-        with gr.Row():
-            csv_file_name = gr.Markdown("**File:** —")
-            csv_row_count = gr.Markdown("**Rows:** —")
-            csv_column_count = gr.Markdown("**Columns:** —")
-            csv_missing_total = gr.Markdown("**Missing cells:** —")
-
         with gr.Row():
             with gr.Column():
+                csv_file_name = gr.Markdown("**File:** —")
+                csv_row_count = gr.Markdown("**Rows:** —")
+                csv_column_count = gr.Markdown("**Columns:** —")
+                csv_missing_total = gr.Markdown("**Missing cells:** —")
                 csv_basic_info = gr.Markdown("No dataset uploaded yet.")
-
-            with gr.Column():
                 csv_column_groups = gr.Markdown("")
-
-            with gr.Column():
                 csv_missing_info = gr.Markdown("")
-
-        csv_preview = gr.Dataframe(
-            headers=None,
-            interactive=False,
-            wrap=True,
-            row_count=(5, "fixed"),
-            col_count=(1, "dynamic"),
-            label="Preview (first 5 rows)"
-        )
-
-        with gr.Row():
-            with gr.Column(scale=4):
-                gr.Markdown("")
-            with gr.Column(scale=0, min_width=140):
+                csv_preview = gr.Dataframe(
+                    headers=None,
+                    interactive=False,
+                    wrap=True,
+                    row_count=(5, "fixed"),
+                    col_count=(1, "dynamic"),
+                    label="Preview (first 5 rows)"
+                )
+            with gr.Column(scale=0, min_width=120):
                 clear_csv_btn = gr.Button("Clear CSV", variant="secondary")
 
     with gr.Row():
@@ -373,13 +361,36 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     csv_file.change(
         fn=handle_csv_upload,
         inputs=[csv_file],
-        outputs=[csv_state, csv_summary, csv_summary_accordion],
+        outputs=[
+            csv_state,
+            csv_file_name,
+            csv_row_count,
+            csv_column_count,
+            csv_missing_total,
+            csv_basic_info,
+            csv_column_groups,
+            csv_missing_info,
+            csv_preview,
+            csv_summary_accordion
+        ],
         show_progress="minimal"
     )
 
     clear_csv_btn.click(
         fn=handle_clear_csv,
-        outputs=[csv_file, csv_state, csv_summary, csv_summary_accordion],
+        outputs=[
+            csv_file,
+            csv_state,
+            csv_file_name,
+            csv_row_count,
+            csv_column_count,
+            csv_missing_total,
+            csv_basic_info,
+            csv_column_groups,
+            csv_missing_info,
+            csv_preview,
+            csv_summary_accordion
+        ],
         show_progress="hidden"
     )
 
