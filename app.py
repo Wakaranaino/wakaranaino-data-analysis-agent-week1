@@ -179,6 +179,43 @@ css = """
     font-weight: 600 !important;
     border-radius: 12px !important;
 }
+.csv-summary-panel {
+    background: linear-gradient(180deg, rgba(255, 209, 102, 0.12), rgba(255, 255, 255, 0.02)) !important;
+    border: 1px solid rgba(255, 190, 85, 0.35) !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+}
+.csv-kpi-row {
+    gap: 10px !important;
+    margin-bottom: 10px !important;
+}
+.csv-kpi {
+    background: #fff8e6 !important;
+    border: 1px solid #ffd68a !important;
+    border-radius: 10px !important;
+    padding: 8px 10px !important;
+    min-height: 48px !important;
+}
+.csv-card {
+    background: #ffffff !important;
+    border: 1px solid #ece3cf !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    min-height: 120px !important;
+}
+.csv-chip-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.csv-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #ffd68a;
+    background: #fff7e6;
+    font-size: 12px;
+}
 """
 
 with gr.Blocks(css=css, js=custom_js) as demo:
@@ -231,22 +268,29 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         visible=False
     ) as csv_summary_accordion:
         with gr.Row():
-            with gr.Column():
-                csv_file_name = gr.Markdown("**File:** —")
-                csv_row_count = gr.Markdown("**Rows:** —")
-                csv_column_count = gr.Markdown("**Columns:** —")
-                csv_missing_total = gr.Markdown("**Missing cells:** —")
-                csv_basic_info = gr.Markdown("No dataset uploaded yet.")
-                csv_column_groups = gr.Markdown("")
-                csv_missing_info = gr.Markdown("")
-                csv_preview = gr.Dataframe(
-                    headers=None,
-                    interactive=False,
-                    wrap=True,
-                    row_count=(5, "fixed"),
-                    col_count=(1, "dynamic"),
-                    label="Preview (first 5 rows)"
-                )
+            with gr.Column(elem_classes="csv-summary-panel"):
+                with gr.Row(elem_classes="csv-kpi-row"):
+                    csv_file_name = gr.Markdown("**File:** —", elem_classes="csv-kpi")
+                    csv_row_count = gr.Markdown("**Rows:** —", elem_classes="csv-kpi")
+                    csv_column_count = gr.Markdown("**Columns:** —", elem_classes="csv-kpi")
+                    csv_missing_total = gr.Markdown("**Missing cells:** —", elem_classes="csv-kpi")
+                with gr.Row():
+                    with gr.Column():
+                        csv_basic_info = gr.Markdown("No dataset uploaded yet.", elem_classes="csv-card")
+                    with gr.Column():
+                        csv_column_groups = gr.Markdown("", elem_classes="csv-card")
+                with gr.Row():
+                    csv_missing_info = gr.Markdown("", elem_classes="csv-card")
+                with gr.Row():
+                    csv_preview = gr.Dataframe(
+                        value=[["No preview available"]],
+                        headers=["Info"],
+                        interactive=False,
+                        wrap=True,
+                        row_count=(5, "fixed"),
+                        col_count=(1, "dynamic"),
+                        label="Preview (first 5 rows)"
+                    )
             with gr.Column(scale=0, min_width=120):
                 clear_csv_btn = gr.Button("Clear CSV", variant="secondary")
 
@@ -395,6 +439,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
