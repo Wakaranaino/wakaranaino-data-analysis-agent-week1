@@ -272,9 +272,9 @@ css = """
 }
 #history-textbox textarea {
     overflow-y: scroll !important;
-    height: 430px !important;
-    min-height: 430px !important;
-    max-height: 430px !important;
+    height: 392px !important;
+    min-height: 392px !important;
+    max-height: 392px !important;
 }
 .history-panel-title {
     font-size: 15px !important;
@@ -428,9 +428,9 @@ css = """
     background: #ffffff !important;
     padding: 4px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-    height: 104px !important;
-    min-height: 104px !important;
-    max-height: 104px !important;
+    height: 88px !important;
+    min-height: 88px !important;
+    max-height: 88px !important;
     overflow: hidden !important;
 }
 #csv-upload .file-preview,
@@ -438,9 +438,9 @@ css = """
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 44px !important;
-    max-height: 44px !important;
-    height: 44px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    height: 34px !important;
     padding: 4px 10px !important;
     border-radius: 8px !important;
     border: 1px dashed #cfd8e6 !important;
@@ -452,17 +452,23 @@ css = """
     overflow: hidden !important;
 }
 #csv-upload .file-drop .file-drop-icon {
-    width: 16px !important;
-    height: 16px !important;
+    width: 14px !important;
+    height: 14px !important;
     margin: 0 !important;
     opacity: 0.85 !important;
 }
 #csv-upload .file-drop .file-drop-text {
-    font-size: 12px !important;
-    line-height: 1.2 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+}
+#csv-upload .file-drop .file-drop-text::before {
+    content: "Drop CSV here or click to upload";
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    color: #6b7280 !important;
 }
 /* Gradio v6 internal wrappers can set larger min-heights; override aggressively */
 #csv-upload [class*="file"],
@@ -471,9 +477,9 @@ css = """
     min-height: unset !important;
 }
 #csv-upload [class*="drop"] {
-    min-height: 44px !important;
-    max-height: 44px !important;
-    height: 44px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    height: 34px !important;
 }
 /* Keep top cards visually aligned after uploader compaction */
 .left-pane,
