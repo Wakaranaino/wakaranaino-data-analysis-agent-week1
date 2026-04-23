@@ -153,6 +153,7 @@ css = """
     border-radius: 14px !important;
     padding: 12px !important;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
+    min-height: 560px !important;
 }
 .left-pane textarea,
 .right-pane textarea,
@@ -271,6 +272,9 @@ css = """
 }
 #history-textbox textarea {
     overflow-y: scroll !important;
+    height: 430px !important;
+    min-height: 430px !important;
+    max-height: 430px !important;
 }
 .history-panel-title {
     font-size: 15px !important;
@@ -308,6 +312,27 @@ css = """
     border: 1px solid #e4e8f0 !important;
     border-radius: 14px !important;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04) !important;
+}
+#prompt-input textarea {
+    height: 150px !important;
+    min-height: 150px !important;
+    max-height: 150px !important;
+    overflow-y: auto !important;
+}
+#execution-output textarea,
+#code-explanation textarea {
+    height: 320px !important;
+    min-height: 320px !important;
+    max-height: 320px !important;
+    overflow-y: auto !important;
+}
+#code-output pre,
+#code-output textarea,
+#code-output .cm-editor,
+#code-output .cm-scroller {
+    height: 320px !important;
+    min-height: 320px !important;
+    max-height: 320px !important;
 }
 .csv-summary-panel {
     background: linear-gradient(180deg, rgba(160, 192, 148, 0.07), rgba(255, 255, 255, 0.02)) !important;
@@ -409,7 +434,8 @@ css = """
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 60px !important;
+    min-height: 64px !important;
+    max-height: 64px !important;
     padding: 6px 8px !important;
     border-radius: 10px !important;
     border: 1px dashed #cfd8e6 !important;
@@ -434,7 +460,8 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             prompt = gr.Textbox(
                 label="Prompt",
                 lines=3,
-                placeholder="Try: Plot AAPL closing prices for the last 100 days"
+                placeholder="Try: Plot AAPL closing prices for the last 100 days",
+                elem_id="prompt-input"
             )
 
             with gr.Row(elem_classes="example-row"):
@@ -658,5 +685,6 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
