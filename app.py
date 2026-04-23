@@ -618,9 +618,12 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     with gr.Row(elem_classes="io-row"):
         with gr.Column():
-            plot_output = gr.Image(
+            plot_output = gr.Gallery(
                 label="Plot Output",
                 height=420,
+                columns=1,
+                object_fit="contain",
+                allow_preview=True,
                 elem_id="plot-output"
             )
 
@@ -766,6 +769,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
