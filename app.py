@@ -119,27 +119,70 @@ def handle_clear_csv_ui():
 
 custom_js = """
 function () {
-  function scrollHistoryToBottom() {
-    const ta = document.querySelector('#history-textbox textarea');
-    if (ta) ta.scrollTop = ta.scrollHeight;
+  let lastHistoryValue = null;
+
+  function getHistoryTextarea() {
+    return document.querySelector('#history-textbox textarea');
   }
-  // Gradio replaces the textarea element on each update,
-  // so we scroll at multiple points after the update settles.
+
+  function scrollHistoryToBottom(force) {
+    const ta = getHistoryTextarea();
+    if (!ta) return false;
+
+    const currentValue = ta.value || ta.textContent || '';
+    if (!force && currentValue === lastHistoryValue) return true;
+
+    lastHistoryValue = currentValue;
+    ta.scrollTop = ta.scrollHeight;
+    return true;
+  }
+
+  // Gradio can re-render textbox nodes. Do repeated delayed scrolls
+  // to reliably stick to latest turn after updates settle.
   function scheduledScroll() {
-    scrollHistoryToBottom();
-    setTimeout(scrollHistoryToBottom, 100);
-    setTimeout(scrollHistoryToBottom, 300);
-    setTimeout(scrollHistoryToBottom, 600);
+    scrollHistoryToBottom(true);
+    requestAnimationFrame(() => scrollHistoryToBottom(true));
+    setTimeout(() => scrollHistoryToBottom(true), 60);
+    setTimeout(() => scrollHistoryToBottom(true), 180);
+    setTimeout(() => scrollHistoryToBottom(true), 420);
   }
-  // Watch the parent container for DOM changes (element replacement)
-  function attachObserver() {
+
+  function bindTextareaListeners() {
+    const ta = getHistoryTextarea();
+    if (!ta || ta.dataset.autoscrollBound === '1') return;
+    ta.dataset.autoscrollBound = '1';
+    ta.addEventListener('input', () => scheduledScroll());
+    ta.addEventListener('change', () => scheduledScroll());
+  }
+
+  // Watch history container for node replacement/value updates.
+  function attachHistoryObserver() {
     const container = document.querySelector('#history-textbox');
     if (!container) {
-      setTimeout(attachObserver, 500);
+      setTimeout(attachHistoryObserver, 500);
       return;
     }
-    const observer = new MutationObserver(scheduledScroll);
-    observer.observe(container, { childList: true, subtree: true });
+
+    const observer = new MutationObserver(() => {
+      bindTextareaListeners();
+      scheduledScroll();
+    });
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true
+    });
+
+    // Fallback polling for async updates that don't trigger mutation
+    // on the textarea content node.
+    setInterval(() => {
+      bindTextareaListeners();
+      scrollHistoryToBottom(false);
+    }, 350);
+
+    bindTextareaListeners();
+    scheduledScroll();
   }
   function compactCsvUploadHint() {
     const root = document.querySelector('#csv-upload');
@@ -199,7 +242,7 @@ function () {
     observer.observe(root, { childList: true, subtree: true });
     compactCsvUploadHint();
   }
-  attachObserver();
+  attachHistoryObserver();
   watchCsvUpload();
 }
 """
