@@ -154,6 +154,42 @@ css = """
     padding: 12px !important;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
 }
+.panel-heading p {
+    margin: 0 0 8px 0 !important;
+    font-size: 22px !important;
+    font-weight: 650 !important;
+    color: #1f2937 !important;
+}
+.quick-actions-card {
+    margin-top: 10px !important;
+    background: var(--ui-card) !important;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04) !important;
+}
+.quick-actions-title p {
+    margin: 0 0 8px 0 !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: #273244 !important;
+}
+.upload-row {
+    margin-top: 8px !important;
+}
+.upload-card {
+    background: var(--ui-card) !important;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04) !important;
+}
+.upload-title p {
+    margin: 0 0 8px 0 !important;
+    font-size: 18px !important;
+    font-weight: 650 !important;
+    color: #1f2937 !important;
+}
 .left-pane textarea,
 .right-pane textarea,
 #execution-output textarea,
@@ -164,8 +200,8 @@ css = """
 }
 .example-row {
     gap: 8px !important;
-    margin-top: -4px !important;
-    margin-bottom: 8px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     flex-wrap: wrap !important;
 }
 .example-row button {
@@ -185,6 +221,7 @@ css = """
     margin-top: -1px !important;
     gap: 8px !important;
     flex-wrap: nowrap !important;
+    margin-bottom: 0 !important;
 }
 .action-row > * {
     flex: 1 1 0 !important;
@@ -230,6 +267,7 @@ css = """
 }
 #history-wrap {
     position: relative;
+    margin-top: 2px !important;
 }
 #history-textbox textarea {
     overflow-y: scroll !important;
@@ -358,8 +396,8 @@ css = """
     font-size: 10px;
 }
 #csv-upload {
-    margin-top: 6px !important;
-    margin-bottom: 8px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     border: 1px solid #e4e8f0 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
@@ -393,30 +431,19 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     with gr.Row(elem_classes="top-row"):
         with gr.Column(elem_classes="left-pane"):
+            gr.Markdown("Ask your question or request analysis", elem_classes="panel-heading")
             prompt = gr.Textbox(
                 label="Prompt",
                 lines=3,
                 placeholder="Try: Plot AAPL closing prices for the last 100 days"
             )
 
-            with gr.Row(elem_classes="example-row"):
-                ex1 = gr.Button("AAPL Trend", variant="secondary")
-                ex2 = gr.Button("TSLA vs MSFT", variant="secondary")
-                ex3 = gr.Button("IBM Stats", variant="secondary")
-                ex4 = gr.Button("Same for NVDA", variant="secondary")
-
             with gr.Row(elem_classes="action-row"):
                 submit_btn = gr.Button("Submit", variant="primary")
                 clear_btn = gr.Button("Clear")
 
-            csv_file = gr.File(
-                label="Upload CSV",
-                file_types=[".csv"],
-                file_count="single",
-                elem_id="csv-upload"
-            )
-
         with gr.Column(elem_classes="right-pane"):
+            gr.Markdown("Conversation History", elem_classes="panel-heading")
             with gr.Group(elem_id="history-wrap"):
                 interpretation = gr.Textbox(
                     label="Conversation History",
@@ -428,6 +455,24 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                     variant="secondary",
                     elem_id="clear-history-btn"
                 )
+
+    with gr.Column(elem_classes="quick-actions-card"):
+        gr.Markdown("Quick actions", elem_classes="quick-actions-title")
+        with gr.Row(elem_classes="example-row"):
+            ex1 = gr.Button("AAPL Trend", variant="secondary")
+            ex2 = gr.Button("TSLA vs MSFT", variant="secondary")
+            ex3 = gr.Button("IBM Stats", variant="secondary")
+            ex4 = gr.Button("Same for NVDA", variant="secondary")
+
+    with gr.Row(elem_classes="upload-row"):
+        with gr.Column(elem_classes="upload-card"):
+            gr.Markdown("Upload CSV File", elem_classes="upload-title")
+            csv_file = gr.File(
+                label="Upload CSV",
+                file_types=[".csv"],
+                file_count="single",
+                elem_id="csv-upload"
+            )
 
     with gr.Accordion(
         "CSV Dataset Summary",
@@ -622,3 +667,4 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
