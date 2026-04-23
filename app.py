@@ -40,7 +40,6 @@ def run_agent_ui(prompt, history_state, csv_state):
         run_status,
         interpretation,
         plot_output,
-        plot_output,
         updated_history,
         "",
         False,
@@ -61,7 +60,6 @@ def handle_edit_or_run(edit_mode, code, history_state):
             gr.update(),
             gr.update(),
             gr.update(),
-            gr.update(),
             history_state
         )
 
@@ -78,7 +76,6 @@ def handle_edit_or_run(edit_mode, code, history_state):
         execution_output,
         run_status,
         interpretation,
-        plot_output,
         plot_output,
         updated_history
     )
@@ -631,11 +628,6 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 type="filepath",
                 elem_id="plot-output"
             )
-            plot_files = gr.File(
-                label="Plot Files (Download)",
-                file_count="multiple",
-                interactive=False
-            )
 
         with gr.Column():
             execution_output = gr.Textbox(
@@ -709,7 +701,6 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             run_status,
             interpretation,
             plot_output,
-            plot_files,
             history_state,
             prompt,
             edit_mode_state,
@@ -732,7 +723,6 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             run_status,
             interpretation,
             plot_output,
-            plot_files,
             history_state
         ],
         show_progress="minimal"
