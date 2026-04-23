@@ -428,6 +428,10 @@ css = """
     background: #ffffff !important;
     padding: 4px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+    height: 104px !important;
+    min-height: 104px !important;
+    max-height: 104px !important;
+    overflow: hidden !important;
 }
 #csv-upload .file-preview,
 #csv-upload .file-preview-holder {
@@ -436,6 +440,7 @@ css = """
 #csv-upload .file-drop {
     min-height: 44px !important;
     max-height: 44px !important;
+    height: 44px !important;
     padding: 4px 10px !important;
     border-radius: 8px !important;
     border: 1px dashed #cfd8e6 !important;
@@ -458,6 +463,17 @@ css = """
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+}
+/* Gradio v6 internal wrappers can set larger min-heights; override aggressively */
+#csv-upload [class*="file"],
+#csv-upload [class*="upload"],
+#csv-upload [class*="drop"] {
+    min-height: unset !important;
+}
+#csv-upload [class*="drop"] {
+    min-height: 44px !important;
+    max-height: 44px !important;
+    height: 44px !important;
 }
 /* Keep top cards visually aligned after uploader compaction */
 .left-pane,
@@ -704,6 +720,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
