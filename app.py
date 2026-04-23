@@ -22,7 +22,7 @@ def clear_prompt():
 
 
 def new_chat():
-    return "", []
+    return render_history_html([]), []
 
 
 def render_history_html(history):
@@ -146,6 +146,40 @@ def handle_clear_csv_ui():
 
 custom_js = """
 function () {
+  function scrollHistoryToBottom() {
+    const box = document.querySelector('#history-textbox');
+    if (!box) return;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function scheduleHistoryScroll() {
+    scrollHistoryToBottom();
+    requestAnimationFrame(scrollHistoryToBottom);
+    setTimeout(scrollHistoryToBottom, 60);
+    setTimeout(scrollHistoryToBottom, 180);
+    setTimeout(scrollHistoryToBottom, 360);
+  }
+
+  function attachHistoryAutoScroll() {
+    const box = document.querySelector('#history-textbox');
+    if (!box) {
+      setTimeout(attachHistoryAutoScroll, 400);
+      return;
+    }
+    if (box.dataset.historyScrollBound === '1') {
+      scheduleHistoryScroll();
+      return;
+    }
+    box.dataset.historyScrollBound = '1';
+
+    const observer = new MutationObserver(() => {
+      scheduleHistoryScroll();
+    });
+    observer.observe(box, { childList: true, subtree: true, characterData: true });
+
+    scheduleHistoryScroll();
+  }
+
   function compactCsvUploadHint() {
     const root = document.querySelector('#csv-upload');
     if (!root) {
@@ -204,6 +238,7 @@ function () {
     observer.observe(root, { childList: true, subtree: true });
     compactCsvUploadHint();
   }
+  attachHistoryAutoScroll();
   watchCsvUpload();
 }
 """
@@ -365,6 +400,13 @@ css = """
 #history-wrap {
     position: relative;
 }
+.history-header-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin: 0 0 8px 0 !important;
+    gap: 8px !important;
+}
 #history-textbox {
     height: 322px !important;
     min-height: 322px !important;
@@ -416,13 +458,9 @@ css = """
     font-size: 15px !important;
     font-weight: 600 !important;
     color: var(--body-text-color) !important;
-    margin: 0 0 10px 0 !important;
+    margin: 0 !important;
 }
 #history-wrap #clear-history-btn {
-    position: absolute !important;
-    top: 8px;
-    right: 10px;
-    z-index: 20;
     height: 22px !important;
     min-height: 22px !important;
     width: 74px !important;
@@ -637,15 +675,17 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
         with gr.Column(elem_classes="right-pane"):
             with gr.Group(elem_id="history-wrap"):
+                with gr.Row(elem_classes="history-header-row"):
+                    gr.Markdown("Conversation History", elem_classes="history-panel-title")
+                    new_chat_btn = gr.Button(
+                        "Clear",
+                        variant="secondary",
+                        elem_id="clear-history-btn"
+                    )
                 interpretation = gr.HTML(
-                    label="Conversation History",
+                    show_label=False,
                     value=render_history_html([]),
                     elem_id="history-textbox"
-                )
-                new_chat_btn = gr.Button(
-                    "Clear",
-                    variant="secondary",
-                    elem_id="clear-history-btn"
                 )
 
     with gr.Accordion(
@@ -868,6 +908,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.queue().launch(ssr_mode=False)
+
 
 
 
