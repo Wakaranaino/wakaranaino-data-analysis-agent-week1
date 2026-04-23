@@ -280,8 +280,11 @@ def _build_history_text(history: list[dict[str, Any]] | None) -> str:
         return ""
 
     lines: list[str] = []
-    for i, turn in enumerate(history, start=1):
-        lines.append(f"========== Turn {i} ==========")
+    total_turns = len(history)
+    for original_idx in range(total_turns - 1, -1, -1):
+        turn = history[original_idx]
+        turn_no = original_idx + 1
+        lines.append(f"========== Turn {turn_no} ==========")
         lines.append("")
         lines.append("▶ USER")
         lines.append(str(turn.get("user", "")))
@@ -522,6 +525,7 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             [],
             updated_history
         )
+
 
 
 
