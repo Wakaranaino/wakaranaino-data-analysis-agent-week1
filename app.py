@@ -1,6 +1,8 @@
 import gradio as gr
 from executor import run_agent, run_edited_code
 from llm import explain_code
+from csv_ui import handle_csv_upload, handle_clear_csv, build_initial_csv_summary_text
+from csv_executor import clear_dataset_session
 
 EXAMPLE_PROMPTS = {
     "AAPL Trend": "Plot AAPL closing prices for the last 100 days",
@@ -81,7 +83,6 @@ function () {
     const ta = document.querySelector('#history-textbox textarea');
     if (ta) ta.scrollTop = ta.scrollHeight;
   }
-
   // Gradio replaces the textarea element on each update,
   // so we scroll at multiple points after the update settles.
   function scheduledScroll() {
@@ -90,7 +91,6 @@ function () {
     setTimeout(scrollHistoryToBottom, 300);
     setTimeout(scrollHistoryToBottom, 600);
   }
-
   // Watch the parent container for DOM changes (element replacement)
   function attachObserver() {
     const container = document.querySelector('#history-textbox');
@@ -101,7 +101,6 @@ function () {
     const observer = new MutationObserver(scheduledScroll);
     observer.observe(container, { childList: true, subtree: true });
   }
-
   attachObserver();
 }
 """
@@ -187,6 +186,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     history_state = gr.State([])
     edit_mode_state = gr.State(False)
+    csv_state = gr.State(clear_dataset_session())
 
     with gr.Row():
         with gr.Column():
@@ -206,6 +206,12 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 submit_btn = gr.Button("Submit", variant="primary")
                 clear_btn = gr.Button("Clear")
 
+            csv_file = gr.File(
+                label="Upload CSV",
+                file_types=[".csv"],
+                file_count="single"
+            )
+
         with gr.Column():
             with gr.Group(elem_id="history-wrap"):
                 interpretation = gr.Textbox(
@@ -218,6 +224,22 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                     variant="secondary",
                     elem_id="clear-history-btn"
                 )
+
+    with gr.Accordion(
+        "CSV Dataset Summary",
+        open=False,
+        visible=False
+    ) as csv_summary_accordion:
+        with gr.Row():
+            with gr.Column():
+                csv_summary = gr.Textbox(
+                    label="Dataset Summary",
+                    lines=14,
+                    interactive=False,
+                    value=build_initial_csv_summary_text()
+                )
+            with gr.Column(scale=0, min_width=120):
+                clear_csv_btn = gr.Button("Clear CSV", variant="secondary")
 
     with gr.Row():
         with gr.Column():
@@ -327,7 +349,21 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         show_progress="hidden"
     )
 
+    csv_file.change(
+        fn=handle_csv_upload,
+        inputs=[csv_file],
+        outputs=[csv_state, csv_summary, csv_summary_accordion],
+        show_progress="minimal"
+    )
+
+    clear_csv_btn.click(
+        fn=handle_clear_csv,
+        outputs=[csv_file, csv_state, csv_summary, csv_summary_accordion],
+        show_progress="hidden"
+    )
+
 demo.launch(ssr_mode=False)
+
 
 
 
