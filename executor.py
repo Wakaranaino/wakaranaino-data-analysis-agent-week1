@@ -2,10 +2,10 @@ import io
 import re
 import traceback
 import multiprocessing as mp
+import tempfile
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from PIL import Image
 
 from llm import (
     generate_code,
@@ -136,8 +136,9 @@ def validate_execution_result(prompt: str, code: str, result: dict, features: di
     issues = []
 
     output_text = (result.get("output") or "").lower()
+    image_paths = result.get("image_paths") or []
     image_bytes_list = result.get("image_bytes_list") or []
-    has_image = len(image_bytes_list) > 0 or result.get("image_bytes") is not None
+    has_image = len(image_paths) > 0 or len(image_bytes_list) > 0 or result.get("image_bytes") is not None
 
     if features["needs_chart"] and not has_image:
         issues.append("The user requested a chart, but no plot image was generated.")
@@ -172,21 +173,21 @@ def _execute_code_worker(code: str, queue: mp.Queue):
         with contextlib.redirect_stdout(output_buffer):
             exec(code, {"__builtins__": __builtins__})
 
-        image_bytes_list = []
+        image_paths = []
         if plt.get_fignums():
             for fig_num in plt.get_fignums():
                 fig = plt.figure(fig_num)
-                buf = io.BytesIO()
-                fig.savefig(buf, format="png", bbox_inches="tight")
-                buf.seek(0)
-                image_bytes_list.append(buf.getvalue())
+                with tempfile.NamedTemporaryFile(prefix="analysis_plot_", suffix=".png", delete=False) as tmp:
+                    fig.savefig(tmp.name, format="png", bbox_inches="tight")
+                    image_paths.append(tmp.name)
             plt.close("all")
 
         queue.put({
             "success": True,
             "output": output_buffer.getvalue(),
-            "image_bytes": image_bytes_list[0] if image_bytes_list else None,
-            "image_bytes_list": image_bytes_list,
+            "image_bytes": None,
+            "image_bytes_list": [],
+            "image_paths": image_paths,
             "error": None
         })
 
@@ -197,6 +198,7 @@ def _execute_code_worker(code: str, queue: mp.Queue):
             "output": output_buffer.getvalue(),
             "image_bytes": None,
             "image_bytes_list": [],
+            "image_paths": [],
             "error": traceback.format_exc()
         })
 
@@ -215,6 +217,7 @@ def execute_code_with_timeout(code: str, timeout: int = EXEC_TIMEOUT):
             "output": "",
             "image_bytes": None,
             "image_bytes_list": [],
+            "image_paths": [],
             "error": f"Execution timed out after {timeout} seconds."
         }
 
@@ -224,6 +227,7 @@ def execute_code_with_timeout(code: str, timeout: int = EXEC_TIMEOUT):
             "output": "",
             "image_bytes": None,
             "image_bytes_list": [],
+            "image_paths": [],
             "error": "Execution failed without returning any result."
         }
 
@@ -268,14 +272,7 @@ def is_external_data_error(error_text: str) -> bool:
 
 
 def _prepare_execution_artifacts(result):
-    images = []
-    image_bytes_list = result.get("image_bytes_list") or []
-
-    if image_bytes_list:
-        for image_bytes in image_bytes_list:
-            images.append(Image.open(io.BytesIO(image_bytes)))
-    elif result.get("image_bytes") is not None:
-        images.append(Image.open(io.BytesIO(result["image_bytes"])))
+    images = result.get("image_paths") or []
 
     execution_output = result["output"]
 
@@ -507,3 +504,4 @@ def run_edited_code(code: str, history_state: list | None = None):
             [],
             updated_history
         )
+
