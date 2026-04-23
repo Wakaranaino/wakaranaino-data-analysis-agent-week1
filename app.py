@@ -409,7 +409,7 @@ css = """
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin: 0 0 10px 0 !important;
+    margin: 0 0 4px 0 !important;
     gap: 8px !important;
     background: transparent !important;
     border: none !important;
@@ -468,9 +468,9 @@ css = """
 #history-title-text {
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 15px !important;
-    line-height: 1.2 !important;
-    font-weight: 600 !important;
+    font-size: 14px !important;
+    line-height: 1.15 !important;
+    font-weight: 500 !important;
     color: #6b7280 !important;
 }
 #history-wrap #clear-history-btn {
