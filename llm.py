@@ -5,7 +5,8 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 MODEL_SIMPLE = "meta-llama/llama-4-scout-17b-16e-instruct"
-MODEL_COMPLEX = "meta-llama/llama-4-scout-17b-16e-instruct"  # swap to "llama-3.1-70b-versatile" when ready to test
+MODEL_COMPLEX = "meta-llama/llama-4-scout-17b-16e-instruct"  # swap to "llama-3.3-70b-versatile" when ready to test
+MODEL_CSV = "llama-3.3-70b-versatile"  # set CSV-specific model here 'openai/gpt-oss-120b'
 
 API_TIMEOUT = 30
 
@@ -170,13 +171,13 @@ Rules:
 - Use only pandas, matplotlib, scipy, numpy.
 - Use df directly; do not read files unless explicitly requested.
 - Do not fetch external/network data unless explicitly requested.
-- Follow user intent; infer reasonable defaults when request is underspecified.
+- Implement only what the user asks.
 - Print labeled results when textual output is needed.
-- If you infer columns/groups, print a short "Assumptions Used" section.
 - If plotting, call plt.tight_layout() and plt.show().
 - For text/category filtering, normalize with .astype(str).str.strip().str.lower().
 - For subgroup comparisons, print subgroup sizes before tests.
-- If an exact requested label is missing, use the closest available label from dataset samples and print which label was used."""
+- If an exact requested label is missing, use the closest available label from dataset samples and print which label was used.
+- Avoid returning meaningless statistical outputs (for example NaN t-statistic/p-value); handle empty groups explicitly."""
 
     user_prompt = f"""Conversation history:
 {history_text}
@@ -192,7 +193,7 @@ Current user request:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
-        model=MODEL_SIMPLE
+        model=MODEL_CSV
     )
     return extract_python_code(raw)
 
@@ -266,11 +267,11 @@ Execution error:
 Fix the code.
 
 Rules:
-- Keep intent unchanged.
 - Return ONLY corrected Python code
 - df is already loaded, use df directly
 - Do not fetch external data or use network APIs
 - Keep the fix minimal and focused on the error
+- Preserve the user's requested intent; do not add extra analyses unless needed to fix the error
 - For text/category filtering, normalize with .astype(str).str.strip().str.lower()
 - For subgroup comparisons, print subgroup sizes before tests
 - Do not return NaN statistical results; handle empty groups explicitly"""
@@ -280,7 +281,7 @@ Rules:
             {"role": "system", "content": "You fix Python code for CSV dataframe analysis. Return ONLY corrected Python code."},
             {"role": "user", "content": repair_prompt}
         ],
-        model=MODEL_SIMPLE
+        model=MODEL_CSV
     )
     return extract_python_code(raw)
 
@@ -350,6 +351,7 @@ Keep concise. No markdown symbols."""
         {"role": "system", "content": "You explain Python code clearly in plain text."},
         {"role": "user", "content": explanation_prompt}
     ])
+
 
 
 
