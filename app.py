@@ -426,7 +426,7 @@ css = """
     border: 1px solid #e4e8f0 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    padding: 6px !important;
+    padding: 4px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
 }
 #csv-upload .file-preview,
@@ -434,16 +434,35 @@ css = """
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 64px !important;
-    max-height: 64px !important;
-    padding: 6px 8px !important;
-    border-radius: 10px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    padding: 4px 10px !important;
+    border-radius: 8px !important;
     border: 1px dashed #cfd8e6 !important;
     background: #fafcff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+}
+#csv-upload .file-drop .file-drop-icon {
+    width: 16px !important;
+    height: 16px !important;
+    margin: 0 !important;
+    opacity: 0.85 !important;
 }
 #csv-upload .file-drop .file-drop-text {
     font-size: 12px !important;
-    line-height: 1.1 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+/* Keep top cards visually aligned after uploader compaction */
+.left-pane,
+.right-pane {
+    min-height: 520px !important;
 }
 """
 
@@ -685,6 +704,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
