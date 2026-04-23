@@ -154,9 +154,6 @@ css = """
     padding: 12px !important;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
     min-height: 0 !important;
-    height: 430px !important;
-    max-height: 430px !important;
-    overflow: hidden !important;
 }
 .left-pane textarea,
 .right-pane textarea,
@@ -233,7 +230,7 @@ css = """
 #code-output-wrap #edit-run-btn {
     position: absolute !important;
     top: 8px;
-    right: 10px;
+    right: 64px;
     z-index: 20;
     height: 24px !important;
     min-height: 24px !important;
@@ -318,9 +315,9 @@ css = """
 }
 #plot-output,
 #execution-output {
-    height: 470px !important;
-    min-height: 470px !important;
-    max-height: 470px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
 }
 #prompt-input textarea {
     height: 150px !important;
@@ -330,24 +327,18 @@ css = """
 }
 #execution-output textarea,
 #code-explanation textarea {
-    height: 390px !important;
-    min-height: 390px !important;
-    max-height: 390px !important;
+    height: 350px !important;
+    min-height: 350px !important;
+    max-height: 350px !important;
     overflow-y: auto !important;
-}
-#code-output,
-#code-explanation {
-    height: 390px !important;
-    min-height: 390px !important;
-    max-height: 390px !important;
 }
 #code-output pre,
 #code-output textarea,
 #code-output .cm-editor,
 #code-output .cm-scroller {
-    height: 320px !important;
-    min-height: 320px !important;
-    max-height: 320px !important;
+    height: 350px !important;
+    min-height: 350px !important;
+    max-height: 350px !important;
     overflow: auto !important;
 }
 .csv-summary-panel {
