@@ -25,6 +25,31 @@ def new_chat():
     return "", []
 
 
+def render_history_html(history):
+    if not history:
+        return '<div class="history-empty">No conversation yet.</div>'
+
+    parts = ['<div class="history-chat-wrap">']
+    for turn in history:
+        user_text = str(turn.get("user", "")).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        assistant_text = str(turn.get("assistant", "")).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        user_text = user_text.replace("\n", "<br>")
+        assistant_text = assistant_text.replace("\n", "<br>")
+
+        parts.append(
+            '<div class="history-row user-row">'
+            f'<div class="history-bubble user-bubble">{user_text}</div>'
+            "</div>"
+        )
+        parts.append(
+            '<div class="history-row assistant-row">'
+            f'<div class="history-bubble assistant-bubble">{assistant_text}</div>'
+            "</div>"
+        )
+    parts.append("</div>")
+    return "".join(parts)
+
+
 def set_run_busy():
     return (
         gr.update(visible=False),
@@ -52,18 +77,19 @@ def cancel_current_run():
 
 def run_agent_ui(prompt, history_state, csv_state):
     if csv_state and csv_state.get("active"):
-        code, execution_output, run_status, interpretation, plot_output, updated_history = run_csv_agent(
+        code, execution_output, run_status, _, plot_output, updated_history = run_csv_agent(
             prompt=prompt,
             history=history_state,
             csv_state=csv_state
         )
     else:
-        code, execution_output, run_status, interpretation, plot_output, updated_history = run_agent(prompt, history_state)
+        code, execution_output, run_status, _, plot_output, updated_history = run_agent(prompt, history_state)
+    history_html = render_history_html(updated_history)
     return (
         code,
         execution_output,
         run_status,
-        interpretation,
+        history_html,
         plot_output,
         updated_history,
         "",
@@ -88,10 +114,11 @@ def handle_edit_or_run(edit_mode, code, history_state):
             history_state
         )
 
-    execution_output, run_status, interpretation, plot_output, updated_history = run_edited_code(
+    execution_output, run_status, _, plot_output, updated_history = run_edited_code(
         code=code,
         history_state=history_state
     )
+    history_html = render_history_html(updated_history)
 
     return (
         code,
@@ -100,7 +127,7 @@ def handle_edit_or_run(edit_mode, code, history_state):
         False,
         execution_output,
         run_status,
-        interpretation,
+        history_html,
         plot_output,
         updated_history
     )
@@ -338,11 +365,52 @@ css = """
 #history-wrap {
     position: relative;
 }
-#history-textbox textarea {
-    overflow-y: scroll !important;
+#history-textbox {
     height: 322px !important;
     min-height: 322px !important;
     max-height: 322px !important;
+    overflow-y: auto !important;
+    border: 1px solid #e3e7ef !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    padding: 10px !important;
+}
+.history-chat-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.history-row {
+    display: flex;
+    width: 100%;
+}
+.assistant-row {
+    justify-content: flex-start;
+}
+.user-row {
+    justify-content: flex-end;
+}
+.history-bubble {
+    max-width: 85%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #e3e7ef;
+    font-size: 13px;
+    line-height: 1.35;
+    color: #273244;
+    word-break: break-word;
+}
+.assistant-bubble {
+    background: #f8fafc;
+}
+.user-bubble {
+    background: #fffaf4;
+    border-color: #f3dfca;
+}
+.history-empty {
+    font-size: 13px;
+    color: #6b7280;
+    padding: 2px 2px 0 2px;
 }
 .history-panel-title {
     font-size: 15px !important;
@@ -569,10 +637,9 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
         with gr.Column(elem_classes="right-pane"):
             with gr.Group(elem_id="history-wrap"):
-                interpretation = gr.Textbox(
+                interpretation = gr.HTML(
                     label="Conversation History",
-                    lines=12,
-                    max_lines=12,
+                    value=render_history_html([]),
                     elem_id="history-textbox"
                 )
                 new_chat_btn = gr.Button(
@@ -801,6 +868,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.queue().launch(ssr_mode=False)
+
 
 
 
