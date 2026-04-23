@@ -317,18 +317,21 @@ def _execute_csv_code_worker(code: str, df: pd.DataFrame, queue: mp.Queue):
         with contextlib.redirect_stdout(output_buffer):
             exec(code, globals_ctx)
 
-        img_bytes = None
+        image_bytes_list = []
         if plt.get_fignums():
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", bbox_inches="tight")
-            buf.seek(0)
-            img_bytes = buf.getvalue()
+            for fig_num in plt.get_fignums():
+                fig = plt.figure(fig_num)
+                buf = io.BytesIO()
+                fig.savefig(buf, format="png", bbox_inches="tight")
+                buf.seek(0)
+                image_bytes_list.append(buf.getvalue())
             plt.close("all")
 
         queue.put({
             "success": True,
             "output": output_buffer.getvalue(),
-            "image_bytes": img_bytes,
+            "image_bytes": image_bytes_list[0] if image_bytes_list else None,
+            "image_bytes_list": image_bytes_list,
             "error": None
         })
     except Exception:
@@ -337,6 +340,7 @@ def _execute_csv_code_worker(code: str, df: pd.DataFrame, queue: mp.Queue):
             "success": False,
             "output": output_buffer.getvalue(),
             "image_bytes": None,
+            "image_bytes_list": [],
             "error": traceback.format_exc()
         })
 
@@ -354,6 +358,7 @@ def _execute_csv_code_with_timeout(code: str, df: pd.DataFrame, timeout: int = C
             "success": False,
             "output": "",
             "image_bytes": None,
+            "image_bytes_list": [],
             "error": f"Execution timed out after {timeout} seconds."
         }
 
@@ -362,6 +367,7 @@ def _execute_csv_code_with_timeout(code: str, df: pd.DataFrame, timeout: int = C
             "success": False,
             "output": "",
             "image_bytes": None,
+            "image_bytes_list": [],
             "error": "Execution failed without returning any result."
         }
 
@@ -369,17 +375,22 @@ def _execute_csv_code_with_timeout(code: str, df: pd.DataFrame, timeout: int = C
 
 
 def _prepare_csv_execution_artifacts(result: dict[str, Any]) -> tuple[str, Any]:
-    img = None
-    if result.get("image_bytes") is not None:
-        img = Image.open(io.BytesIO(result["image_bytes"]))
+    images = []
+    image_bytes_list = result.get("image_bytes_list") or []
+
+    if image_bytes_list:
+        for image_bytes in image_bytes_list:
+            images.append(Image.open(io.BytesIO(image_bytes)))
+    elif result.get("image_bytes") is not None:
+        images.append(Image.open(io.BytesIO(result["image_bytes"])))
 
     execution_output = (result.get("output") or "").strip()
-    if not execution_output and img is None:
+    if not execution_output and not images:
         execution_output = "Code executed successfully, but nothing was printed."
     elif not execution_output:
         execution_output = "Plot generated successfully."
 
-    return execution_output, img
+    return execution_output, images
 
 
 def _csv_prompt_needs_stat_test(prompt: str) -> bool:
@@ -441,7 +452,7 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
                 "assistant": "Please enter a prompt.",
                 "success": False
             }]
-            return "", "Please enter a prompt.", "CSV request blocked", _build_history_text(updated_history), None, updated_history
+            return "", "Please enter a prompt.", "CSV request blocked", _build_history_text(updated_history), [], updated_history
 
         if not csv_state or not csv_state.get("active") or csv_state.get("df") is None:
             updated_history = history + [{
@@ -449,7 +460,7 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
                 "assistant": "No active CSV dataset. Upload a CSV file first.",
                 "success": False
             }]
-            return "", "No active CSV dataset. Upload a CSV file first.", "No CSV session", _build_history_text(updated_history), None, updated_history
+            return "", "No active CSV dataset. Upload a CSV file first.", "No CSV session", _build_history_text(updated_history), [], updated_history
 
         df = csv_state["df"]
         summary = csv_state.get("summary") or {}
@@ -498,7 +509,7 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             f"Execution error (after {CSV_MAX_ATTEMPTS - 1} retry): {last_error}",
             "CSV execution failed",
             _build_history_text(updated_history),
-            None,
+            [],
             updated_history
         )
     except Exception as e:
@@ -512,9 +523,11 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             f"System error: {str(e)}",
             "CSV system/API error",
             _build_history_text(updated_history),
-            None,
+            [],
             updated_history
         )
+
+
 
 
 
