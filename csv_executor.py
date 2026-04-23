@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import io
+import traceback
+import multiprocessing as mp
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
 import pandas as pd
+from PIL import Image
+
+from llm import generate_csv_code, repair_csv_code, interpret_result
 
 
 MAX_PREVIEW_ROWS = 5
 MAX_CATEGORY_UNIQUES = 20
+CSV_EXEC_TIMEOUT = 35
+CSV_MAX_ATTEMPTS = 2
 
 
 @dataclass
@@ -265,3 +273,192 @@ def _safe_cell_value(value: Any) -> Any:
         return value
 
     return str(value)
+
+
+def _build_history_text(history: list[dict[str, Any]] | None) -> str:
+    if not history:
+        return ""
+
+    lines: list[str] = []
+    for i, turn in enumerate(history, start=1):
+        lines.append(f"========== Turn {i} ==========")
+        lines.append("")
+        lines.append("▶ USER")
+        lines.append(str(turn.get("user", "")))
+        lines.append("")
+        lines.append("◆ ASSISTANT")
+        lines.append(str(turn.get("assistant", "")))
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _execute_csv_code_worker(code: str, df: pd.DataFrame, queue: mp.Queue):
+    import io
+    import contextlib
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    from scipy import stats
+
+    output_buffer = io.StringIO()
+
+    try:
+        globals_ctx = {
+            "__builtins__": __builtins__,
+            "df": df.copy(),
+            "pd": pd,
+            "np": np,
+            "plt": plt,
+            "stats": stats,
+        }
+
+        with contextlib.redirect_stdout(output_buffer):
+            exec(code, globals_ctx)
+
+        img_bytes = None
+        if plt.get_fignums():
+            buf = io.BytesIO()
+            plt.savefig(buf, format="png", bbox_inches="tight")
+            buf.seek(0)
+            img_bytes = buf.getvalue()
+            plt.close("all")
+
+        queue.put({
+            "success": True,
+            "output": output_buffer.getvalue(),
+            "image_bytes": img_bytes,
+            "error": None
+        })
+    except Exception:
+        plt.close("all")
+        queue.put({
+            "success": False,
+            "output": output_buffer.getvalue(),
+            "image_bytes": None,
+            "error": traceback.format_exc()
+        })
+
+
+def _execute_csv_code_with_timeout(code: str, df: pd.DataFrame, timeout: int = CSV_EXEC_TIMEOUT) -> dict[str, Any]:
+    queue: mp.Queue = mp.Queue()
+    process = mp.Process(target=_execute_csv_code_worker, args=(code, df, queue))
+    process.start()
+    process.join(timeout)
+
+    if process.is_alive():
+        process.terminate()
+        process.join()
+        return {
+            "success": False,
+            "output": "",
+            "image_bytes": None,
+            "error": f"Execution timed out after {timeout} seconds."
+        }
+
+    if queue.empty():
+        return {
+            "success": False,
+            "output": "",
+            "image_bytes": None,
+            "error": "Execution failed without returning any result."
+        }
+
+    return queue.get()
+
+
+def _prepare_csv_execution_artifacts(result: dict[str, Any]) -> tuple[str, Any]:
+    img = None
+    if result.get("image_bytes") is not None:
+        img = Image.open(io.BytesIO(result["image_bytes"]))
+
+    execution_output = (result.get("output") or "").strip()
+    if not execution_output and img is None:
+        execution_output = "Code executed successfully, but nothing was printed."
+    elif not execution_output:
+        execution_output = "Plot generated successfully."
+
+    return execution_output, img
+
+
+def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] | None):
+    try:
+        if history is None:
+            history = []
+
+        if not prompt or not str(prompt).strip():
+            updated_history = history + [{
+                "user": prompt or "",
+                "assistant": "Please enter a prompt.",
+                "success": False
+            }]
+            return "", "Please enter a prompt.", "CSV request blocked", _build_history_text(updated_history), None, updated_history
+
+        if not csv_state or not csv_state.get("active") or csv_state.get("df") is None:
+            updated_history = history + [{
+                "user": prompt,
+                "assistant": "No active CSV dataset. Upload a CSV file first.",
+                "success": False
+            }]
+            return "", "No active CSV dataset. Upload a CSV file first.", "No CSV session", _build_history_text(updated_history), None, updated_history
+
+        df = csv_state["df"]
+        summary = csv_state.get("summary") or {}
+
+        last_error = None
+        code = ""
+
+        for attempt in range(CSV_MAX_ATTEMPTS):
+            if attempt == 0:
+                code = generate_csv_code(prompt, dataset_summary=summary, history=history)
+            else:
+                code = repair_csv_code(
+                    prompt=prompt,
+                    bad_code=code,
+                    error_message=last_error or "Unknown error",
+                    dataset_summary=summary,
+                    history=history
+                )
+
+            result = _execute_csv_code_with_timeout(code, df, timeout=CSV_EXEC_TIMEOUT)
+            if result.get("success"):
+                execution_output, img = _prepare_csv_execution_artifacts(result)
+                status = "Executed on CSV dataset"
+                interpretation = interpret_result(f"[FILE] {prompt}", code, execution_output, status, history=None)
+                updated_history = history + [{
+                    "user": prompt,
+                    "assistant": interpretation,
+                    "success": True
+                }]
+                return code, execution_output, status, _build_history_text(updated_history), img, updated_history
+
+            last_error = result.get("error") or "Unknown execution error."
+
+        updated_history = history + [{
+            "user": prompt,
+            "assistant": "CSV analysis failed. See Execution Output for details.",
+            "success": False
+        }]
+        return (
+            code,
+            f"Execution error (after {CSV_MAX_ATTEMPTS - 1} retry): {last_error}",
+            "CSV execution failed",
+            _build_history_text(updated_history),
+            None,
+            updated_history
+        )
+    except Exception as e:
+        updated_history = (history or []) + [{
+            "user": prompt,
+            "assistant": "CSV analysis failed due to a system or API error. See Execution Output for details.",
+            "success": False
+        }]
+        return (
+            "",
+            f"System error: {str(e)}",
+            "CSV system/API error",
+            _build_history_text(updated_history),
+            None,
+            updated_history
+        )
