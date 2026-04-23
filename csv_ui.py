@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 import gradio as gr
-import pandas as pd
 
 from csv_executor import (
     load_csv_file,
@@ -11,11 +10,11 @@ from csv_executor import (
 )
 
 
-def handle_csv_upload(file_obj):
+def handle_csv_upload(file_obj) -> tuple[Any, ...]:
     """
     UI-facing handler for CSV upload.
 
-    Returns:
+    Returns (structured summary):
     - csv_state
     - csv_file_name
     - csv_row_count
@@ -28,7 +27,7 @@ def handle_csv_upload(file_obj):
     - accordion update
     """
     empty_state = clear_dataset_session()
-    empty_preview = _empty_preview_df()
+    empty_preview: list[list[Any]] = []
 
     if file_obj is None:
         return (
@@ -37,7 +36,7 @@ def handle_csv_upload(file_obj):
             "**Rows:** —",
             "**Columns:** —",
             "**Missing cells:** —",
-            "No dataset uploaded yet.",
+            "No CSV file uploaded yet.",
             "",
             "",
             empty_preview,
@@ -68,9 +67,7 @@ def handle_csv_upload(file_obj):
             "**Rows:** —",
             "**Columns:** —",
             "**Missing cells:** —",
-            f"CSV upload failed.
-
-{result.message}",
+            f"CSV upload failed.\n\n{result.message}",
             "",
             "",
             empty_preview,
@@ -78,28 +75,18 @@ def handle_csv_upload(file_obj):
         )
 
     summary = result.summary
-    total_missing = int(sum(summary.get("missing_counts", {}).values()))
-
-    csv_file_name = f"**File:** {summary.get('file_name', 'uploaded.csv')}"
-    csv_row_count = f"**Rows:** {summary.get('row_count', 0)}"
-    csv_column_count = f"**Columns:** {summary.get('column_count', 0)}"
-    csv_missing_total = f"**Missing cells:** {total_missing}"
-
-    csv_basic_info = _build_basic_info(summary)
-    csv_column_groups = _build_column_groups(summary)
-    csv_missing_info = _build_missing_info(summary)
-    csv_preview = _build_preview_df(summary)
+    missing_total = int(sum(summary.get("missing_counts", {}).values()))
 
     return (
         result.session_data,
-        csv_file_name,
-        csv_row_count,
-        csv_column_count,
-        csv_missing_total,
-        csv_basic_info,
-        csv_column_groups,
-        csv_missing_info,
-        csv_preview,
+        f"**File:** {summary.get('file_name', 'uploaded.csv')}",
+        f"**Rows:** {summary.get('row_count', 0)}",
+        f"**Columns:** {summary.get('column_count', 0)}",
+        f"**Missing cells:** {missing_total}",
+        _build_basic_info(summary),
+        _build_column_groups(summary),
+        _build_missing_info(summary),
+        _build_preview_table(summary),
         gr.update(
             visible=True,
             open=True,
@@ -108,9 +95,22 @@ def handle_csv_upload(file_obj):
     )
 
 
-def handle_clear_csv():
+def handle_clear_csv() -> tuple[Any, ...]:
     """
     Reset CSV-related UI and state.
+
+    Returns:
+    - file input reset
+    - csv_state reset
+    - csv_file_name reset
+    - csv_row_count reset
+    - csv_column_count reset
+    - csv_missing_total reset
+    - csv_basic_info reset
+    - csv_column_groups reset
+    - csv_missing_info reset
+    - csv_preview reset
+    - accordion hidden
     """
     return (
         None,
@@ -119,10 +119,10 @@ def handle_clear_csv():
         "**Rows:** —",
         "**Columns:** —",
         "**Missing cells:** —",
-        "No dataset uploaded yet.",
         "",
         "",
-        _empty_preview_df(),
+        "",
+        [],
         gr.update(
             visible=False,
             open=False,
@@ -136,15 +136,21 @@ def build_initial_csv_summary_text() -> str:
 
 
 def _extract_file_path(file_obj) -> str | None:
+    """
+    Supports Gradio file objects across common shapes.
+    """
     if file_obj is None:
         return None
 
+    # Common gradio temp file object
     if hasattr(file_obj, "name") and file_obj.name:
         return str(file_obj.name)
 
+    # Sometimes file object may already be a string path
     if isinstance(file_obj, str):
         return file_obj
 
+    # Fallback for dict-like objects
     if isinstance(file_obj, dict):
         if "name" in file_obj and file_obj["name"]:
             return str(file_obj["name"])
@@ -162,95 +168,58 @@ def _build_csv_accordion_label(summary: dict[str, Any]) -> str:
 
 
 def _build_basic_info(summary: dict[str, Any]) -> str:
-    file_name = summary.get("file_name", "uploaded.csv")
-    row_count = summary.get("row_count", 0)
-    col_count = summary.get("column_count", 0)
-    column_names = summary.get("column_names", [])
-
-    lines = [
-        f"### Basic Info",
-        f"- File: {file_name}",
-        f"- Rows: {row_count}",
-        f"- Columns: {col_count}",
-        "",
-        "### Column Names",
-    ]
-
-    for col in column_names:
+    lines: list[str] = []
+    lines.append("Dataset Overview")
+    lines.append(f"- File name: {summary.get('file_name', 'uploaded.csv')}")
+    lines.append(f"- Rows: {summary.get('row_count', 0)}")
+    lines.append(f"- Columns: {summary.get('column_count', 0)}")
+    lines.append("")
+    lines.append("All Columns")
+    for col in summary.get("column_names", []):
         lines.append(f"- {col}")
-
-    return "
-".join(lines).strip()
+    return "\n".join(lines).strip()
 
 
 def _build_column_groups(summary: dict[str, Any]) -> str:
-    numeric = summary.get("numeric_columns", [])
-    categorical = summary.get("categorical_columns", [])
+    lines: list[str] = []
+    numeric_cols = summary.get("numeric_columns", [])
     datetime_cols = summary.get("datetime_columns", [])
+    categorical_cols = summary.get("categorical_columns", [])
 
-    lines = ["### Column Groups"]
-
-    lines.append("")
-    lines.append("**Numeric**")
-    if numeric:
-        for col in numeric:
-            lines.append(f"- {col}")
-    else:
-        lines.append("- None")
-
-    lines.append("")
-    lines.append("**Categorical / Text**")
-    if categorical:
-        for col in categorical:
-            lines.append(f"- {col}")
-    else:
-        lines.append("- None")
-
-    lines.append("")
-    lines.append("**Datetime**")
-    if datetime_cols:
-        for col in datetime_cols:
-            lines.append(f"- {col}")
-    else:
-        lines.append("- None")
-
-    return "
-".join(lines).strip()
+    lines.append("Column Groups")
+    lines.append(f"- Numeric ({len(numeric_cols)}): {', '.join(numeric_cols) if numeric_cols else 'None'}")
+    lines.append(f"- Datetime ({len(datetime_cols)}): {', '.join(datetime_cols) if datetime_cols else 'None'}")
+    lines.append(f"- Categorical/Text ({len(categorical_cols)}): {', '.join(categorical_cols) if categorical_cols else 'None'}")
+    return "\n".join(lines).strip()
 
 
 def _build_missing_info(summary: dict[str, Any]) -> str:
+    lines: list[str] = []
     missing_counts = summary.get("missing_counts", {})
-    total_missing = int(sum(missing_counts.values()))
+    lines.append("Missing Values by Column")
 
-    lines = ["### Missing Values"]
+    if not missing_counts:
+        lines.append("- No missing-value summary available.")
+        return "\n".join(lines).strip()
 
-    if total_missing == 0:
-        lines.append("")
-        lines.append("No missing values detected.")
-        return "
-".join(lines).strip()
-
-    sorted_missing = sorted(
-        missing_counts.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )
-
-    lines.append("")
-    for col, count in sorted_missing:
-        if count > 0:
-            lines.append(f"- {col}: {count}")
-
-    return "
-".join(lines).strip()
+    for col, count in missing_counts.items():
+        lines.append(f"- {col}: {count}")
+    return "\n".join(lines).strip()
 
 
-def _build_preview_df(summary: dict[str, Any]) -> pd.DataFrame:
-    records = summary.get("preview_records", [])
-    if not records:
-        return _empty_preview_df()
-    return pd.DataFrame(records)
+def _build_preview_table(summary: dict[str, Any]) -> list[list[Any]]:
+    rows: list[list[Any]] = []
+    preview_records = summary.get("preview_records", [])
+    columns = summary.get("column_names", [])
 
+    if not preview_records:
+        return [["No preview available"]]
 
-def _empty_preview_df() -> pd.DataFrame:
-    return pd.DataFrame()
+    if not columns and preview_records:
+        columns = list(preview_records[0].keys())
+
+    for record in preview_records:
+        rows.append([record.get(col) for col in columns])
+
+    return rows
+
