@@ -198,11 +198,9 @@ def _build_column_groups(summary: dict[str, Any]) -> str:
     categorical_text = _format_chip_group(categorical_cols)
 
     return (
-        "### Column Groups\n"
-        "\n"
         f"**Numeric ({len(numeric_cols)})**\n\n{numeric_text}\n\n"
-        f"**Datetime ({len(datetime_cols)})**\n\n{datetime_text}\n\n"
-        f"**Categorical/Text ({len(categorical_cols)})**\n\n{categorical_text}"
+        f"**Categorical/Text ({len(categorical_cols)})**\n\n{categorical_text}\n\n"
+        f"**Date/Time ({len(datetime_cols)})**\n\n{datetime_text}"
     )
 
 
@@ -210,21 +208,22 @@ def _build_missing_info(summary: dict[str, Any]) -> str:
     missing_counts = summary.get("missing_counts", {})
     row_count = max(int(summary.get("row_count", 0)), 1)
     missing_columns = [(col, count) for col, count in missing_counts.items() if int(count) > 0]
+    missing_columns.sort(key=lambda x: int(x[1]), reverse=True)
     missing_total = sum(int(count) for _, count in missing_columns)
 
     if missing_total == 0:
-        return "### Missing Values\n\nNo missing values detected."
+        return "No missing values detected."
 
-    lines = [
-        "### Missing Values",
-        "",
-        "| Column | Missing Count | Missing % |",
-        "| --- | ---: | ---: |",
-    ]
+    lines: list[str] = []
+    top_missing = missing_columns[:8]
 
-    for col, count in missing_columns:
+    for col, count in top_missing:
         pct = (int(count) / row_count) * 100
-        lines.append(f"| `{col}` | {int(count)} | {pct:.2f}% |")
+        lines.append(f"- `{col}`: {int(count)} ({pct:.1f}%)")
+
+    remaining = len(missing_columns) - len(top_missing)
+    if remaining > 0:
+        lines.append(f"- Others: {remaining} columns")
 
     return "\n".join(lines).strip()
 
