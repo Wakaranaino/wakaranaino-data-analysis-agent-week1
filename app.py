@@ -153,7 +153,10 @@ css = """
     border-radius: 14px !important;
     padding: 12px !important;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
-    min-height: 560px !important;
+    min-height: 0 !important;
+    height: 430px !important;
+    max-height: 430px !important;
+    overflow: hidden !important;
 }
 .left-pane textarea,
 .right-pane textarea,
@@ -272,9 +275,9 @@ css = """
 }
 #history-textbox textarea {
     overflow-y: scroll !important;
-    height: 392px !important;
-    min-height: 392px !important;
-    max-height: 392px !important;
+    height: 322px !important;
+    min-height: 322px !important;
+    max-height: 322px !important;
 }
 .history-panel-title {
     font-size: 15px !important;
@@ -313,6 +316,12 @@ css = """
     border-radius: 14px !important;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04) !important;
 }
+#plot-output,
+#execution-output {
+    height: 470px !important;
+    min-height: 470px !important;
+    max-height: 470px !important;
+}
 #prompt-input textarea {
     height: 150px !important;
     min-height: 150px !important;
@@ -321,10 +330,16 @@ css = """
 }
 #execution-output textarea,
 #code-explanation textarea {
-    height: 320px !important;
-    min-height: 320px !important;
-    max-height: 320px !important;
+    height: 390px !important;
+    min-height: 390px !important;
+    max-height: 390px !important;
     overflow-y: auto !important;
+}
+#code-output,
+#code-explanation {
+    height: 390px !important;
+    min-height: 390px !important;
+    max-height: 390px !important;
 }
 #code-output pre,
 #code-output textarea,
@@ -333,6 +348,7 @@ css = """
     height: 320px !important;
     min-height: 320px !important;
     max-height: 320px !important;
+    overflow: auto !important;
 }
 .csv-summary-panel {
     background: linear-gradient(180deg, rgba(160, 192, 148, 0.07), rgba(255, 255, 255, 0.02)) !important;
@@ -428,9 +444,9 @@ css = """
     background: #ffffff !important;
     padding: 4px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-    height: 88px !important;
-    min-height: 88px !important;
-    max-height: 88px !important;
+    height: 62px !important;
+    min-height: 62px !important;
+    max-height: 62px !important;
     overflow: hidden !important;
 }
 #csv-upload .file-preview,
@@ -438,37 +454,36 @@ css = """
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 34px !important;
-    max-height: 34px !important;
-    height: 34px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    height: 30px !important;
     padding: 4px 10px !important;
     border-radius: 8px !important;
     border: 1px dashed #cfd8e6 !important;
     background: #fafcff !important;
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: center !important;
     gap: 8px !important;
     overflow: hidden !important;
+    position: relative !important;
 }
 #csv-upload .file-drop .file-drop-icon {
-    width: 14px !important;
-    height: 14px !important;
-    margin: 0 !important;
-    opacity: 0.85 !important;
+    display: none !important;
 }
-#csv-upload .file-drop .file-drop-text {
-    font-size: 0 !important;
-    line-height: 0 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+#csv-upload .file-drop .file-drop-text,
+#csv-upload .file-drop p,
+#csv-upload .file-drop span,
+#csv-upload .file-drop small,
+#csv-upload .file-drop svg {
+    display: none !important;
 }
-#csv-upload .file-drop .file-drop-text::before {
+#csv-upload .file-drop::after {
     content: "Drop CSV here or click to upload";
     font-size: 11px !important;
     line-height: 1.2 !important;
     color: #6b7280 !important;
+    white-space: nowrap !important;
 }
 /* Gradio v6 internal wrappers can set larger min-heights; override aggressively */
 #csv-upload [class*="file"],
@@ -477,14 +492,14 @@ css = """
     min-height: unset !important;
 }
 #csv-upload [class*="drop"] {
-    min-height: 34px !important;
-    max-height: 34px !important;
-    height: 34px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    height: 30px !important;
 }
 /* Keep top cards visually aligned after uploader compaction */
 .left-pane,
 .right-pane {
-    min-height: 520px !important;
+    min-height: 0 !important;
 }
 """
 
@@ -501,6 +516,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             prompt = gr.Textbox(
                 label="Prompt",
                 lines=3,
+                max_lines=3,
                 placeholder="Try: Plot AAPL closing prices for the last 100 days",
                 elem_id="prompt-input"
             )
@@ -527,6 +543,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 interpretation = gr.Textbox(
                     label="Conversation History",
                     lines=12,
+                    max_lines=12,
                     elem_id="history-textbox"
                 )
                 new_chat_btn = gr.Button(
@@ -590,6 +607,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             execution_output = gr.Textbox(
                 label="Execution Output",
                 lines=14,
+                max_lines=14,
                 elem_id="execution-output"
             )
 
@@ -614,6 +632,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 code_explanation = gr.Textbox(
                     label="Code Explanation",
                     lines=12,
+                    max_lines=12,
                     interactive=False,
                     placeholder="Click 'Explain Code' to see a structured explanation of the current code.",
                     elem_id="code-explanation"
@@ -627,6 +646,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     run_status = gr.Textbox(
         label="Run Status",
         lines=1,
+        max_lines=1,
         elem_id="run-status"
     )
 
@@ -726,6 +746,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
