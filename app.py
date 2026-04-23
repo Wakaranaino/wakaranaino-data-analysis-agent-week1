@@ -109,7 +109,66 @@ function () {
     const observer = new MutationObserver(scheduledScroll);
     observer.observe(container, { childList: true, subtree: true });
   }
+  function compactCsvUploadHint() {
+    const root = document.querySelector('#csv-upload');
+    if (!root) {
+      setTimeout(compactCsvUploadHint, 500);
+      return;
+    }
+    const textNodes = Array.from(root.querySelectorAll('div, span, p'));
+    const marker = textNodes.find((el) => {
+      const t = (el.textContent || '').toLowerCase();
+      return t.includes('drop file here') || t.includes('click to upload');
+    });
+    if (!marker) return;
+
+    const dropZone =
+      marker.closest('[class*=\"drop\"]') ||
+      marker.closest('[class*=\"upload\"]') ||
+      marker.closest('button') ||
+      marker.parentElement;
+    if (!dropZone) return;
+
+    dropZone.style.minHeight = '30px';
+    dropZone.style.maxHeight = '30px';
+    dropZone.style.height = '30px';
+    dropZone.style.display = 'flex';
+    dropZone.style.alignItems = 'center';
+    dropZone.style.justifyContent = 'center';
+    dropZone.style.padding = '0 10px';
+
+    Array.from(dropZone.children).forEach((child) => {
+      if (!child.classList.contains('csv-inline-hint')) {
+        child.style.display = 'none';
+      }
+    });
+
+    let hint = dropZone.querySelector('.csv-inline-hint');
+    if (!hint) {
+      hint = document.createElement('span');
+      hint.className = 'csv-inline-hint';
+      dropZone.appendChild(hint);
+    }
+    hint.textContent = 'Drop CSV here or click to upload';
+    hint.style.fontSize = '11px';
+    hint.style.color = '#6b7280';
+    hint.style.whiteSpace = 'nowrap';
+  }
+
+  function watchCsvUpload() {
+    const root = document.querySelector('#csv-upload');
+    if (!root) {
+      setTimeout(watchCsvUpload, 500);
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      compactCsvUploadHint();
+    });
+    observer.observe(root, { childList: true, subtree: true });
+    compactCsvUploadHint();
+  }
   attachObserver();
+  watchCsvUpload();
 }
 """
 
@@ -737,6 +796,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
