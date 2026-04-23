@@ -2,7 +2,7 @@ import gradio as gr
 from executor import run_agent, run_edited_code
 from llm import explain_code
 from csv_ui import handle_csv_upload, handle_clear_csv
-from csv_executor import clear_dataset_session
+from csv_executor import clear_dataset_session, run_csv_agent
 
 EXAMPLE_PROMPTS = {
     "AAPL Trend": "Plot AAPL closing prices for the last 100 days",
@@ -24,8 +24,15 @@ def new_chat():
     return "", []
 
 
-def run_agent_ui(prompt, history_state):
-    code, execution_output, run_status, interpretation, plot_output, updated_history = run_agent(prompt, history_state)
+def run_agent_ui(prompt, history_state, csv_state):
+    if csv_state and csv_state.get("active"):
+        code, execution_output, run_status, interpretation, plot_output, updated_history = run_csv_agent(
+            prompt=prompt,
+            history=history_state,
+            csv_state=csv_state
+        )
+    else:
+        code, execution_output, run_status, interpretation, plot_output, updated_history = run_agent(prompt, history_state)
     return (
         code,
         execution_output,
@@ -421,7 +428,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     submit_btn.click(
         fn=run_agent_ui,
-        inputs=[prompt, history_state],
+        inputs=[prompt, history_state, csv_state],
         outputs=[
             code_output,
             execution_output,
