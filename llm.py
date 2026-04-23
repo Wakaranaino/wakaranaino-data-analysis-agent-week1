@@ -170,13 +170,13 @@ Rules:
 - Use only pandas, matplotlib, scipy, numpy.
 - Use df directly; do not read files unless explicitly requested.
 - Do not fetch external/network data unless explicitly requested.
-- Implement only what the user asks.
+- Follow user intent; infer reasonable defaults when request is underspecified.
 - Print labeled results when textual output is needed.
+- If you infer columns/groups, print a short "Assumptions Used" section.
 - If plotting, call plt.tight_layout() and plt.show().
 - For text/category filtering, normalize with .astype(str).str.strip().str.lower().
 - For subgroup comparisons, print subgroup sizes before tests.
-- If an exact requested label is missing, use the closest available label from dataset samples and print which label was used.
-- Avoid returning meaningless statistical outputs (for example NaN t-statistic/p-value); handle empty groups explicitly."""
+- If an exact requested label is missing, use the closest available label from dataset samples and print which label was used."""
 
     user_prompt = f"""Conversation history:
 {history_text}
@@ -266,11 +266,11 @@ Execution error:
 Fix the code.
 
 Rules:
+- Keep intent unchanged.
 - Return ONLY corrected Python code
 - df is already loaded, use df directly
 - Do not fetch external data or use network APIs
 - Keep the fix minimal and focused on the error
-- Preserve the user's requested intent; do not add extra analyses unless needed to fix the error
 - For text/category filtering, normalize with .astype(str).str.strip().str.lower()
 - For subgroup comparisons, print subgroup sizes before tests
 - Do not return NaN statistical results; handle empty groups explicitly"""
