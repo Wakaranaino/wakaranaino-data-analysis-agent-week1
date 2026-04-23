@@ -114,28 +114,76 @@ function () {
 """
 
 css = """
+.gradio-container {
+    max-width: 1360px !important;
+    margin: 0 auto !important;
+    padding: 10px 14px 22px !important;
+    background: #f7f8fa !important;
+}
+.gradio-container h1 {
+    font-size: 48px !important;
+    line-height: 1.05 !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 8px !important;
+    color: #1f2937 !important;
+}
+.top-row {
+    gap: 12px !important;
+    align-items: stretch !important;
+}
+.left-pane,
+.right-pane {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    padding: 10px 12px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+}
+#prompt-input textarea,
+#history-textbox textarea,
+#execution-output textarea,
+#code-explanation textarea,
+#run-status textarea {
+    border-radius: 10px !important;
+}
 .example-row {
     gap: 8px !important;
-    margin-top: -6px !important;
-    margin-bottom: 10px !important;
+    margin-top: -2px !important;
+    margin-bottom: 8px !important;
     flex-wrap: nowrap !important;
 }
 .example-row button {
     min-width: unset !important;
     width: auto !important;
-    min-height: 34px !important;
-    height: 34px !important;
-    padding: 0 14px !important;
-    font-size: 14px !important;
-    border-radius: 18px !important;
+    min-height: 33px !important;
+    height: 33px !important;
+    padding: 0 13px !important;
+    font-size: 13px !important;
+    border-radius: 16px !important;
+    border: 1px solid #e5e7eb !important;
+    background: #f3f4f6 !important;
+    color: #1f2937 !important;
     flex: 0 0 auto !important;
 }
 .action-row {
-    margin-top: -2px !important;
+    margin-top: 0 !important;
     gap: 10px !important;
+    margin-bottom: 2px !important;
 }
 .action-row button {
     min-height: 42px !important;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+.action-row button.primary {
+    background: #ea7a33 !important;
+    border-color: #ea7a33 !important;
+}
+.action-row button.primary:hover {
+    background: #dc6d27 !important;
+    border-color: #dc6d27 !important;
 }
 .panel-action-row {
     display: flex !important;
@@ -161,6 +209,7 @@ css = """
 }
 #history-wrap {
     position: relative;
+    min-height: 100%;
 }
 #history-textbox textarea {
     overflow-y: scroll !important;
@@ -173,8 +222,8 @@ css = """
 }
 #history-wrap #clear-history-btn {
     position: absolute !important;
-    top: 7px;
-    right: 14px;
+    top: 8px;
+    right: 12px;
     z-index: 20;
     height: 24px !important;
     min-height: 24px !important;
@@ -186,6 +235,33 @@ css = """
     line-height: 24px !important;
     font-weight: 600 !important;
     border-radius: 12px !important;
+}
+.io-row,
+.code-row {
+    gap: 12px !important;
+    margin-top: 10px !important;
+}
+#plot-output,
+#execution-output,
+#code-output,
+#code-explanation,
+#run-status {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+}
+#plot-output .label-wrap,
+#execution-output .label-wrap,
+#code-output .label-wrap,
+#code-explanation .label-wrap,
+#run-status .label-wrap {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+.panel-action-row button.primary {
+    background: #ea7a33 !important;
+    border-color: #ea7a33 !important;
 }
 .csv-summary-panel {
     background: linear-gradient(180deg, rgba(160, 192, 148, 0.07), rgba(255, 255, 255, 0.02)) !important;
@@ -276,18 +352,24 @@ css = """
 #csv-upload {
     margin-top: 6px !important;
     margin-bottom: 8px !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+    padding: 8px !important;
 }
 #csv-upload .file-preview,
 #csv-upload .file-preview-holder {
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 120px !important;
-    padding: 10px 8px !important;
+    min-height: 84px !important;
+    max-height: 96px !important;
+    padding: 8px 8px !important;
 }
 #csv-upload .file-drop .file-drop-text {
-    font-size: 14px !important;
-    line-height: 1.2 !important;
+    font-size: 13px !important;
+    line-height: 1.1 !important;
 }
 """
 
@@ -298,12 +380,13 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     edit_mode_state = gr.State(False)
     csv_state = gr.State(clear_dataset_session())
 
-    with gr.Row():
-        with gr.Column():
+    with gr.Row(elem_classes="top-row"):
+        with gr.Column(elem_classes="left-pane"):
             prompt = gr.Textbox(
                 label="Prompt",
                 lines=3,
-                placeholder="Try: Plot AAPL closing prices for the last 100 days"
+                placeholder="Try: Plot AAPL closing prices for the last 100 days",
+                elem_id="prompt-input"
             )
 
             with gr.Row(elem_classes="example-row"):
@@ -323,7 +406,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 elem_id="csv-upload"
             )
 
-        with gr.Column():
+        with gr.Column(elem_classes="right-pane"):
             with gr.Group(elem_id="history-wrap"):
                 interpretation = gr.Textbox(
                     label="Conversation History",
@@ -379,26 +462,29 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 with gr.Column(scale=0, min_width=132):
                     clear_csv_btn = gr.Button("Clear CSV", variant="secondary")
 
-    with gr.Row():
+    with gr.Row(elem_classes="io-row"):
         with gr.Column():
             plot_output = gr.Image(
                 label="Plot Output",
-                height=420
+                height=420,
+                elem_id="plot-output"
             )
 
         with gr.Column():
             execution_output = gr.Textbox(
                 label="Execution Output",
-                lines=14
+                lines=14,
+                elem_id="execution-output"
             )
 
-    with gr.Row():
+    with gr.Row(elem_classes="code-row"):
         with gr.Column():
             code_output = gr.Code(
                 label="Generated Python Code",
                 language="python",
                 lines=12,
-                interactive=False
+                interactive=False,
+                elem_id="code-output"
             )
 
             with gr.Row(elem_classes="panel-action-row"):
@@ -413,7 +499,8 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 label="Code Explanation",
                 lines=12,
                 interactive=False,
-                placeholder="Click 'Explain Code' to see a structured explanation of the current code."
+                placeholder="Click 'Explain Code' to see a structured explanation of the current code.",
+                elem_id="code-explanation"
             )
 
             with gr.Row(elem_classes="panel-action-row"):
@@ -425,7 +512,8 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     run_status = gr.Textbox(
         label="Run Status",
-        lines=1
+        lines=1,
+        elem_id="run-status"
     )
 
     ex1.click(fn=lambda: fill_prompt(EXAMPLE_PROMPTS["AAPL Trend"]), outputs=prompt)
