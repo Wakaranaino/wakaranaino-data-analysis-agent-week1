@@ -16,7 +16,11 @@ API_TIMEOUT = 30
 # ---------------------------------------------------------------------------
 
 _BASE_SYSTEM_PROMPT = """You generate executable Python code for data analysis.
-Return ONLY Python code. No markdown, no explanations.
+Return exactly one fenced Python code block and no extra prose.
+Format:
+```python
+# code
+```
 
 Rules:
 - Use only: pandas, matplotlib, yfinance, scipy, numpy
@@ -25,10 +29,14 @@ Rules:
 - Default period: 3mo if not specified
 - Convert to scalar before :.4f formatting: float(val) or val.item()
 - Print results with clear labels
-- Call plt.tight_layout() and plt.show()"""
+- If plotting, save to /tmp/analysis_plot.png using plt.savefig(...), then call plt.tight_layout() and plt.show()"""
 
 _COMPLEX_SYSTEM_PROMPT = """You generate executable Python code for data analysis.
-Return ONLY Python code. No markdown, no explanations.
+Return exactly one fenced Python code block and no extra prose.
+Format:
+```python
+# code
+```
 
 Start with a plan comment block, then follow it exactly:
 # Plan:
@@ -44,11 +52,12 @@ Structure rules:
 - Run any statistical test last, after all data is ready
 - Convert to scalar before :.4f formatting: float(val) or val.item()
 - For monthly resampling use resample('ME'), not 'M'
-- Print all results with clear labels; call plt.tight_layout() and plt.show()"""
+- Print all results with clear labels
+- If plotting, save to /tmp/analysis_plot.png using plt.savefig(...), then call plt.tight_layout() and plt.show()"""
 
 # Repair prompts follow the same swap logic
 _BASE_REPAIR_RULES = """Rules:
-- Return ONLY corrected Python code. No markdown.
+- Return exactly one fenced Python code block and no extra prose.
 - Focus on the error message as the primary signal
 - Use 'Close' only; if error mentions Adj Close, switch to Close
 - If error mentions Series.__format__ or ndarray, convert to scalar before formatting
@@ -56,7 +65,7 @@ _BASE_REPAIR_RULES = """Rules:
 - Keep the fix minimal — change only what the error requires"""
 
 _COMPLEX_REPAIR_RULES = """Rules:
-- Return ONLY corrected Python code. No markdown.
+- Return exactly one fenced Python code block and no extra prose.
 - Re-read the plan comments and check each step matches the code below it
 - If a step is missing or out of order, rewrite that section
 - Use 'Close' only; if error mentions Adj Close, switch to Close
@@ -162,7 +171,11 @@ def generate_csv_code(prompt: str, dataset_summary: dict | None = None, history=
     )
 
     system_prompt = """You generate executable Python code for file-based data analysis.
-Return ONLY Python code. No markdown, no explanations.
+Return exactly one fenced Python code block and no extra prose.
+Format:
+```python
+# code
+```
 
 Context:
 - A pandas DataFrame named df is already loaded and available.
@@ -173,7 +186,7 @@ Rules:
 - Do not fetch external/network data unless explicitly requested.
 - Implement only what the user asks.
 - Print labeled results when textual output is needed.
-- If plotting, call plt.tight_layout() and plt.show().
+- If plotting, save to /tmp/analysis_plot.png using plt.savefig(...), then call plt.tight_layout() and plt.show().
 - For text/category filtering, normalize with .astype(str).str.strip().str.lower().
 - For subgroup comparisons, print subgroup sizes before tests.
 - If an exact requested label is missing, use the closest available label from dataset samples and print which label was used.
@@ -267,7 +280,7 @@ Execution error:
 Fix the code.
 
 Rules:
-- Return ONLY corrected Python code
+- Return exactly one fenced Python code block and no extra prose
 - df is already loaded, use df directly
 - Do not fetch external data or use network APIs
 - Keep the fix minimal and focused on the error
@@ -278,7 +291,7 @@ Rules:
 
     raw = _post_chat(
         [
-            {"role": "system", "content": "You fix Python code for CSV dataframe analysis. Return ONLY corrected Python code."},
+            {"role": "system", "content": "You fix Python code for CSV dataframe analysis. Return exactly one fenced Python code block and no extra prose."},
             {"role": "user", "content": repair_prompt}
         ],
         model=MODEL_CSV
