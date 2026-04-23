@@ -248,6 +248,7 @@ css = """
     --ui-bg: #f7f8fb;
     --ui-card: #ffffff;
     --ui-border: #e5e7eb;
+    --ui-inner-border: #e3e7ef;
     --ui-text: #111827;
     --ui-muted: #6b7280;
     --ui-accent: #ea7a33;
@@ -291,7 +292,7 @@ css = """
 #code-explanation textarea,
 #run-status textarea {
     border-radius: 12px !important;
-    border-color: #e3e7ef !important;
+    border-color: var(--ui-inner-border) !important;
 }
 .example-row {
     gap: 8px !important;
@@ -399,20 +400,27 @@ css = """
 }
 #history-wrap {
     position: relative;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
 .history-header-row {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin: 0 0 8px 0 !important;
+    margin: 0 0 10px 0 !important;
     gap: 8px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 #history-textbox {
     height: 322px !important;
     min-height: 322px !important;
     max-height: 322px !important;
     overflow-y: auto !important;
-    border: 1px solid #e3e7ef !important;
+    border: 1px solid var(--ui-inner-border) !important;
     border-radius: 12px !important;
     background: #ffffff !important;
     padding: 10px !important;
@@ -436,7 +444,7 @@ css = """
     max-width: 85%;
     padding: 8px 10px;
     border-radius: 10px;
-    border: 1px solid #e3e7ef;
+    border: 1px solid var(--ui-inner-border);
     font-size: 13px;
     line-height: 1.35;
     color: #273244;
@@ -455,9 +463,12 @@ css = """
     padding: 2px 2px 0 2px;
 }
 .history-panel-title {
-    font-size: 15px !important;
+    font-size: 14px !important;
     font-weight: 600 !important;
-    color: var(--body-text-color) !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
+}
+.history-panel-title p {
     margin: 0 !important;
 }
 #history-wrap #clear-history-btn {
@@ -485,7 +496,7 @@ css = """
     background: var(--ui-card) !important;
     border: 1px solid #e4e8f0 !important;
     border-radius: 14px !important;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04) !important;
+    box-shadow: none !important;
 }
 #plot-output,
 #execution-output {
