@@ -136,7 +136,8 @@ def validate_execution_result(prompt: str, code: str, result: dict, features: di
     issues = []
 
     output_text = (result.get("output") or "").lower()
-    has_image = result.get("image_bytes") is not None
+    image_bytes_list = result.get("image_bytes_list") or []
+    has_image = len(image_bytes_list) > 0 or result.get("image_bytes") is not None
 
     if features["needs_chart"] and not has_image:
         issues.append("The user requested a chart, but no plot image was generated.")
@@ -171,18 +172,21 @@ def _execute_code_worker(code: str, queue: mp.Queue):
         with contextlib.redirect_stdout(output_buffer):
             exec(code, {"__builtins__": __builtins__})
 
-        img_bytes = None
+        image_bytes_list = []
         if plt.get_fignums():
-            buf = io.BytesIO()
-            plt.savefig(buf, format="png", bbox_inches="tight")
-            buf.seek(0)
-            img_bytes = buf.getvalue()
+            for fig_num in plt.get_fignums():
+                fig = plt.figure(fig_num)
+                buf = io.BytesIO()
+                fig.savefig(buf, format="png", bbox_inches="tight")
+                buf.seek(0)
+                image_bytes_list.append(buf.getvalue())
             plt.close("all")
 
         queue.put({
             "success": True,
             "output": output_buffer.getvalue(),
-            "image_bytes": img_bytes,
+            "image_bytes": image_bytes_list[0] if image_bytes_list else None,
+            "image_bytes_list": image_bytes_list,
             "error": None
         })
 
@@ -192,6 +196,7 @@ def _execute_code_worker(code: str, queue: mp.Queue):
             "success": False,
             "output": output_buffer.getvalue(),
             "image_bytes": None,
+            "image_bytes_list": [],
             "error": traceback.format_exc()
         })
 
@@ -209,6 +214,7 @@ def execute_code_with_timeout(code: str, timeout: int = EXEC_TIMEOUT):
             "success": False,
             "output": "",
             "image_bytes": None,
+            "image_bytes_list": [],
             "error": f"Execution timed out after {timeout} seconds."
         }
 
@@ -217,6 +223,7 @@ def execute_code_with_timeout(code: str, timeout: int = EXEC_TIMEOUT):
             "success": False,
             "output": "",
             "image_bytes": None,
+            "image_bytes_list": [],
             "error": "Execution failed without returning any result."
         }
 
@@ -261,18 +268,23 @@ def is_external_data_error(error_text: str) -> bool:
 
 
 def _prepare_execution_artifacts(result):
-    img = None
-    if result["image_bytes"] is not None:
-        img = Image.open(io.BytesIO(result["image_bytes"]))
+    images = []
+    image_bytes_list = result.get("image_bytes_list") or []
+
+    if image_bytes_list:
+        for image_bytes in image_bytes_list:
+            images.append(Image.open(io.BytesIO(image_bytes)))
+    elif result.get("image_bytes") is not None:
+        images.append(Image.open(io.BytesIO(result["image_bytes"])))
 
     execution_output = result["output"]
 
-    if not execution_output.strip() and img is None:
+    if not execution_output.strip() and not images:
         execution_output = "Code executed successfully, but nothing was printed."
     elif not execution_output.strip():
         execution_output = "Plot generated successfully."
 
-    return execution_output, img
+    return execution_output, images
 
 
 def run_agent(prompt: str, history: list | None = None):
@@ -294,7 +306,7 @@ def run_agent(prompt: str, history: list | None = None):
                 validation_message,
                 "Blocked by input validation",
                 history_text,
-                None,
+                [],
                 updated_history
             )
 
@@ -362,7 +374,7 @@ def run_agent(prompt: str, history: list | None = None):
                     f"Execution error: {last_error}",
                     "External data source / API error",
                     history_text,
-                    None,
+                    [],
                     updated_history
                 )
 
@@ -379,7 +391,7 @@ def run_agent(prompt: str, history: list | None = None):
                     f"Execution error (after {attempt-1} retries): {last_error}",
                     "Retry failed",
                     history_text,
-                    None,
+                    [],
                     updated_history
                 )
 
@@ -411,7 +423,7 @@ def run_agent(prompt: str, history: list | None = None):
             f"System error: {str(e)}",
             "System/API error",
             history_text,
-            None,
+            [],
             updated_history
         )
 
@@ -436,7 +448,7 @@ def run_edited_code(code: str, history_state: list | None = None):
                 validation_message,
                 "Blocked edited code",
                 history_text,
-                None,
+                [],
                 updated_history
             )
 
@@ -455,7 +467,7 @@ def run_edited_code(code: str, history_state: list | None = None):
                 f"Execution error: {error_text}",
                 "Edited code failed",
                 history_text,
-                None,
+                [],
                 updated_history
             )
 
@@ -492,6 +504,6 @@ def run_edited_code(code: str, history_state: list | None = None):
             f"System error: {str(e)}",
             "Edited code system error",
             history_text,
-            None,
+            [],
             updated_history
         )
