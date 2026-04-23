@@ -115,7 +115,7 @@ function () {
 
 css = """
 :root {
-    --ui-bg: #f8f9fb;
+    --ui-bg: #f7f8fb;
     --ui-card: #ffffff;
     --ui-border: #e5e7eb;
     --ui-text: #111827;
@@ -123,21 +123,23 @@ css = """
     --ui-accent: #ea7a33;
 }
 .gradio-container {
-    max-width: 1240px !important;
+    width: min(1760px, calc(100vw - 40px)) !important;
+    max-width: min(1760px, calc(100vw - 40px)) !important;
     margin: 0 auto !important;
-    padding: 10px 14px 18px !important;
-    background: var(--ui-bg) !important;
+    padding: 14px 16px 20px !important;
+    background: linear-gradient(180deg, #fbfcff 0%, var(--ui-bg) 100%) !important;
+    border-radius: 16px !important;
 }
 .gradio-container h1 {
-    margin-bottom: 2px !important;
-    font-size: 42px !important;
+    margin-bottom: 4px !important;
+    font-size: 48px !important;
     line-height: 1.1 !important;
     letter-spacing: -0.02em !important;
     color: var(--ui-text) !important;
 }
 .app-subtitle p {
-    margin: 0 0 10px 0 !important;
-    font-size: 14px !important;
+    margin: 0 0 12px 0 !important;
+    font-size: 16px !important;
     color: var(--ui-muted) !important;
 }
 .top-row {
@@ -148,15 +150,17 @@ css = """
 .right-pane {
     background: var(--ui-card) !important;
     border: 1px solid var(--ui-border) !important;
-    border-radius: 12px !important;
-    padding: 10px !important;
+    border-radius: 14px !important;
+    padding: 12px !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
 }
 .left-pane textarea,
 .right-pane textarea,
 #execution-output textarea,
 #code-explanation textarea,
 #run-status textarea {
-    border-radius: 10px !important;
+    border-radius: 12px !important;
+    border-color: #e3e7ef !important;
 }
 .example-row {
     gap: 8px !important;
@@ -172,8 +176,8 @@ css = """
     padding: 0 12px !important;
     font-size: 13px !important;
     border-radius: 999px !important;
-    border: 1px solid var(--ui-border) !important;
-    background: #f3f4f6 !important;
+    border: 1px solid #dde3ee !important;
+    background: #f7f9fc !important;
     color: #273244 !important;
     flex: 0 0 auto !important;
 }
@@ -189,16 +193,18 @@ css = """
 .action-row button,
 .action-row .gr-button {
     min-height: 40px !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-weight: 600 !important;
+    box-shadow: none !important;
 }
 .action-row button.primary {
-    background: var(--ui-accent) !important;
+    background: linear-gradient(180deg, #ef8b45 0%, var(--ui-accent) 100%) !important;
     border-color: var(--ui-accent) !important;
+    color: #ffffff !important;
 }
 .action-row button.primary:hover {
-    background: #db6a23 !important;
-    border-color: #db6a23 !important;
+    background: linear-gradient(180deg, #e78039 0%, #dd6f2a 100%) !important;
+    border-color: #dd6f2a !important;
 }
 .panel-action-row {
     display: flex !important;
@@ -248,7 +254,7 @@ css = """
     font-size: 12px !important;
     line-height: 22px !important;
     font-weight: 600 !important;
-    border-radius: 12px !important;
+    border-radius: 999px !important;
 }
 .io-row,
 .code-row {
@@ -261,8 +267,9 @@ css = """
 #code-explanation,
 #run-status {
     background: var(--ui-card) !important;
-    border: 1px solid var(--ui-border) !important;
-    border-radius: 12px !important;
+    border: 1px solid #e4e8f0 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04) !important;
 }
 .csv-summary-panel {
     background: linear-gradient(180deg, rgba(160, 192, 148, 0.07), rgba(255, 255, 255, 0.02)) !important;
@@ -353,10 +360,11 @@ css = """
 #csv-upload {
     margin-top: 6px !important;
     margin-bottom: 8px !important;
-    border: 1px solid var(--ui-border) !important;
+    border: 1px solid #e4e8f0 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
     padding: 6px !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
 }
 #csv-upload .file-preview,
 #csv-upload .file-preview-holder {
@@ -365,6 +373,9 @@ css = """
 #csv-upload .file-drop {
     min-height: 60px !important;
     padding: 6px 8px !important;
+    border-radius: 10px !important;
+    border: 1px dashed #cfd8e6 !important;
+    background: #fafcff !important;
 }
 #csv-upload .file-drop .file-drop-text {
     font-size: 12px !important;
