@@ -85,6 +85,13 @@ def explain_code_ui(code):
     return explain_code(code)
 
 
+def handle_clear_csv_ui():
+    # csv_ui.handle_clear_csv currently returns:
+    # (file_reset, csv_state, file_name, rows, cols, missing, basic, groups, missing_info, preview, accordion)
+    # UploadButton has no file-value output to reset, so we drop the first element here.
+    return handle_clear_csv()[1:]
+
+
 custom_js = """
 function () {
   function scrollHistoryToBottom() {
@@ -109,7 +116,66 @@ function () {
     const observer = new MutationObserver(scheduledScroll);
     observer.observe(container, { childList: true, subtree: true });
   }
+  function compactCsvUploadHint() {
+    const root = document.querySelector('#csv-upload');
+    if (!root) {
+      setTimeout(compactCsvUploadHint, 500);
+      return;
+    }
+    const textNodes = Array.from(root.querySelectorAll('div, span, p'));
+    const marker = textNodes.find((el) => {
+      const t = (el.textContent || '').toLowerCase();
+      return t.includes('drop file here') || t.includes('click to upload');
+    });
+    if (!marker) return;
+
+    const dropZone =
+      marker.closest('[class*=\"drop\"]') ||
+      marker.closest('[class*=\"upload\"]') ||
+      marker.closest('button') ||
+      marker.parentElement;
+    if (!dropZone) return;
+
+    dropZone.style.minHeight = '30px';
+    dropZone.style.maxHeight = '30px';
+    dropZone.style.height = '30px';
+    dropZone.style.display = 'flex';
+    dropZone.style.alignItems = 'center';
+    dropZone.style.justifyContent = 'center';
+    dropZone.style.padding = '0 10px';
+
+    Array.from(dropZone.children).forEach((child) => {
+      if (!child.classList.contains('csv-inline-hint')) {
+        child.style.display = 'none';
+      }
+    });
+
+    let hint = dropZone.querySelector('.csv-inline-hint');
+    if (!hint) {
+      hint = document.createElement('span');
+      hint.className = 'csv-inline-hint';
+      dropZone.appendChild(hint);
+    }
+    hint.textContent = 'Drop CSV here or click to upload';
+    hint.style.fontSize = '11px';
+    hint.style.color = '#6b7280';
+    hint.style.whiteSpace = 'nowrap';
+  }
+
+  function watchCsvUpload() {
+    const root = document.querySelector('#csv-upload');
+    if (!root) {
+      setTimeout(watchCsvUpload, 500);
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      compactCsvUploadHint();
+    });
+    observer.observe(root, { childList: true, subtree: true });
+    compactCsvUploadHint();
+  }
   attachObserver();
+  watchCsvUpload();
 }
 """
 
@@ -433,44 +499,22 @@ css = """
     border: 1px solid #e4e8f0 !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    padding: 4px 6px !important;
+    padding: 6px 8px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-    min-height: 52px !important;
-    overflow: hidden !important;
-}
-#csv-upload .file-preview,
-#csv-upload .file-preview-holder {
     min-height: 0 !important;
 }
-#csv-upload .file-drop,
-#csv-upload [class*="drop"] {
-    min-height: 34px !important;
-    max-height: 34px !important;
-    height: 34px !important;
-    border-radius: 8px !important;
-    border: 1px dashed #d7dfec !important;
-    background: #fbfcff !important;
-    padding: 0 10px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
+#csv-upload button {
+    min-height: 32px !important;
+    height: 32px !important;
+    border-radius: 9px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
 }
-#csv-upload .file-drop svg,
-#csv-upload .file-drop br,
-#csv-upload .file-drop .file-drop-icon {
-    display: none !important;
-}
-#csv-upload .file-drop * {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-#csv-upload .file-drop .file-drop-text {
+#csv-upload-hint p {
+    margin: 4px 2px 0 2px !important;
     font-size: 11px !important;
-    line-height: 1.2 !important;
     color: #6b7280 !important;
-    margin: 0 !important;
 }
 /* Keep top cards visually aligned after uploader compaction */
 .left-pane,
@@ -507,12 +551,13 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 submit_btn = gr.Button("Submit", variant="primary")
                 clear_btn = gr.Button("Clear")
 
-            csv_file = gr.File(
-                label="Upload CSV",
+            csv_file = gr.UploadButton(
+                "Upload CSV",
                 file_types=[".csv"],
                 file_count="single",
                 elem_id="csv-upload"
             )
+            gr.Markdown("Click Upload CSV to select a file", elem_id="csv-upload-hint")
 
         with gr.Column(elem_classes="right-pane"):
             with gr.Group(elem_id="history-wrap"):
@@ -685,7 +730,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         show_progress="hidden"
     )
 
-    csv_file.change(
+    csv_file.upload(
         fn=handle_csv_upload,
         inputs=[csv_file],
         outputs=[
@@ -704,9 +749,8 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
     clear_csv_btn.click(
-        fn=handle_clear_csv,
+        fn=handle_clear_csv_ui,
         outputs=[
-            csv_file,
             csv_state,
             csv_file_name,
             csv_row_count,
@@ -722,6 +766,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
+
 
 
 
