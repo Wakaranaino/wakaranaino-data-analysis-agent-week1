@@ -723,35 +723,37 @@ with gr.Blocks(css=css, js=custom_js) as demo:
         show_progress="hidden"
     )
 
-    run_event = (
-        submit_btn.click(
-            fn=set_run_busy,
-            outputs=[submit_btn, cancel_btn, run_in_progress],
-            queue=False,
-            show_progress="hidden"
-        ).then(
-            fn=run_agent_ui,
-            inputs=[prompt, history_state, csv_state],
-            outputs=[
-                code_output,
-                execution_output,
-                run_status,
-                interpretation,
-                plot_output,
-                history_state,
-                prompt,
-                edit_mode_state,
-                code_output,
-                edit_run_btn,
-                code_explanation
-            ],
-            show_progress="minimal"
-        ).then(
-            fn=set_run_idle,
-            outputs=[submit_btn, cancel_btn, run_in_progress],
-            queue=False,
-            show_progress="hidden"
-        )
+    submit_btn.click(
+        fn=set_run_busy,
+        outputs=[submit_btn, cancel_btn, run_in_progress],
+        queue=False,
+        show_progress="hidden"
+    )
+
+    run_event = submit_btn.click(
+        fn=run_agent_ui,
+        inputs=[prompt, history_state, csv_state],
+        outputs=[
+            code_output,
+            execution_output,
+            run_status,
+            interpretation,
+            plot_output,
+            history_state,
+            prompt,
+            edit_mode_state,
+            code_output,
+            edit_run_btn,
+            code_explanation
+        ],
+        show_progress="minimal"
+    )
+
+    run_event.then(
+        fn=set_run_idle,
+        outputs=[submit_btn, cancel_btn, run_in_progress],
+        queue=False,
+        show_progress="hidden"
     )
 
     cancel_btn.click(
