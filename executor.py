@@ -239,8 +239,11 @@ def build_history_text(history):
         return ""
 
     lines = []
-    for i, turn in enumerate(history, start=1):
-        lines.append(f"========== Turn {i} ==========")
+    total_turns = len(history)
+    for original_idx in range(total_turns - 1, -1, -1):
+        turn = history[original_idx]
+        turn_no = original_idx + 1
+        lines.append(f"========== Turn {turn_no} ==========")
         lines.append("")
         lines.append("▶ USER")
         lines.append(turn["user"])
@@ -504,4 +507,5 @@ def run_edited_code(code: str, history_state: list | None = None):
             [],
             updated_history
         )
+
 
