@@ -155,6 +155,8 @@ def generate_csv_code(prompt: str, dataset_summary: dict | None = None, history=
         f"Columns: {summary.get('column_count', 0)}\n"
         f"Column names: {summary.get('column_names', [])}\n"
         f"Numeric columns: {summary.get('numeric_columns', [])}\n"
+        f"Categorical columns: {summary.get('categorical_columns', [])}\n"
+        f"Categorical value samples: {summary.get('categorical_samples', {})}\n"
         f"Missing counts: {summary.get('missing_counts', {})}\n"
     )
 
@@ -170,7 +172,11 @@ Rules:
 - Do not fetch external/network data unless explicitly requested.
 - Implement only what the user asks.
 - Print labeled results when textual output is needed.
-- If plotting, call plt.tight_layout() and plt.show()."""
+- If plotting, call plt.tight_layout() and plt.show().
+- For text/category filtering, normalize with .astype(str).str.strip().str.lower().
+- For subgroup comparisons, print subgroup sizes before tests.
+- If an exact requested label is missing, use the closest available label from dataset samples and print which label was used.
+- Avoid returning meaningless statistical outputs (for example NaN t-statistic/p-value); handle empty groups explicitly."""
 
     user_prompt = f"""Conversation history:
 {history_text}
@@ -238,6 +244,8 @@ def repair_csv_code(
         f"Columns: {summary.get('column_count', 0)}\n"
         f"Column names: {summary.get('column_names', [])}\n"
         f"Numeric columns: {summary.get('numeric_columns', [])}\n"
+        f"Categorical columns: {summary.get('categorical_columns', [])}\n"
+        f"Categorical value samples: {summary.get('categorical_samples', {})}\n"
     )
 
     repair_prompt = f"""Conversation history:
@@ -262,7 +270,10 @@ Rules:
 - df is already loaded, use df directly
 - Do not fetch external data or use network APIs
 - Keep the fix minimal and focused on the error
-- Preserve the user's requested intent; do not add extra analyses unless needed to fix the error"""
+- Preserve the user's requested intent; do not add extra analyses unless needed to fix the error
+- For text/category filtering, normalize with .astype(str).str.strip().str.lower()
+- For subgroup comparisons, print subgroup sizes before tests
+- Do not return NaN statistical results; handle empty groups explicitly"""
 
     raw = _post_chat(
         [
@@ -339,4 +350,5 @@ Keep concise. No markdown symbols."""
         {"role": "system", "content": "You explain Python code clearly in plain text."},
         {"role": "user", "content": explanation_prompt}
     ])
+
 
