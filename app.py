@@ -494,9 +494,7 @@ css = """
     background: #ffffff !important;
     padding: 4px !important;
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-    height: 62px !important;
-    min-height: 62px !important;
-    max-height: 62px !important;
+    min-height: 58px !important;
     overflow: hidden !important;
 }
 #csv-upload .file-preview,
@@ -504,47 +502,18 @@ css = """
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 30px !important;
-    max-height: 30px !important;
-    height: 30px !important;
-    padding: 4px 10px !important;
-    border-radius: 8px !important;
-    border: 1px dashed #cfd8e6 !important;
-    background: #fafcff !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 8px !important;
-    overflow: hidden !important;
-    position: relative !important;
-}
-#csv-upload .file-drop .file-drop-icon {
     display: none !important;
 }
-#csv-upload .file-drop .file-drop-text,
-#csv-upload .file-drop p,
-#csv-upload .file-drop span,
-#csv-upload .file-drop small,
-#csv-upload .file-drop svg {
-    display: none !important;
-}
-#csv-upload .file-drop::after {
-    content: "Drop CSV here or click to upload";
+#csv-upload::after {
+    content: "Click Upload CSV to select a file";
+    display: block;
+    margin: 4px 6px 2px !important;
     font-size: 11px !important;
-    line-height: 1.2 !important;
     color: #6b7280 !important;
+    line-height: 1.2 !important;
     white-space: nowrap !important;
-}
-/* Gradio v6 internal wrappers can set larger min-heights; override aggressively */
-#csv-upload [class*="file"],
-#csv-upload [class*="upload"],
-#csv-upload [class*="drop"] {
-    min-height: unset !important;
-}
-#csv-upload [class*="drop"] {
-    min-height: 30px !important;
-    max-height: 30px !important;
-    height: 30px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 /* Keep top cards visually aligned after uploader compaction */
 .left-pane,
