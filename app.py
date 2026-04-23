@@ -4,6 +4,15 @@ from llm import explain_code
 from csv_ui import handle_csv_upload, handle_clear_csv
 from csv_executor import clear_dataset_session, run_csv_agent
 
+import gradio, pandas, numpy, scipy, matplotlib
+print("VERSIONS:",
+      "gradio", gradio.__version__,
+      "pandas", pandas.__version__,
+      "numpy", numpy.__version__,
+      "scipy", scipy.__version__,
+      "matplotlib", matplotlib.__version__)
+
+
 EXAMPLE_PROMPTS = {
     "AAPL Trend": "Plot AAPL closing prices for the last 100 days",
     "TSLA vs MSFT": "Compare the monthly returns of Tesla (TSLA) and Microsoft (MSFT) over the past year. Show both on the same chart and run a t-test to see if the mean returns are significantly different.",
