@@ -196,10 +196,12 @@ def _build_column_groups(summary: dict[str, Any]) -> str:
     numeric_text = _format_chip_group(numeric_cols)
     datetime_text = _format_chip_group(datetime_cols)
     categorical_text = _format_chip_group(categorical_cols)
+    subgroup_text = _build_categorical_subgroup_text(summary)
 
     return (
         f"**Numeric ({len(numeric_cols)})**\n\n{numeric_text}\n\n"
         f"**Categorical/Text ({len(categorical_cols)})**\n\n{categorical_text}\n\n"
+        f"**Subgroup values (low-cardinality categorical columns)**\n\n{subgroup_text}\n\n"
         f"**Date/Time ({len(datetime_cols)})**\n\n{datetime_text}"
     )
 
@@ -250,5 +252,53 @@ def _format_chip_group(columns: list[str]) -> str:
         return "_None_"
     chips = [f"<span class='csv-chip'>{col}</span>" for col in columns]
     return "<div class='csv-chip-wrap'>" + " ".join(chips) + "</div>"
+
+
+def _build_categorical_subgroup_text(summary: dict[str, Any]) -> str:
+    categorical_cols = summary.get("categorical_columns", [])
+    categorical_samples = summary.get("categorical_samples", {})
+    unique_counts = summary.get("unique_counts", {})
+
+    # Keep this compact and avoid free-text/high-cardinality fields.
+    max_unique = 12
+    max_values = 5
+    max_value_length = 36
+    max_word_count = 6
+
+    lines: list[str] = []
+    shown_cols = 0
+
+    for col in categorical_cols:
+        uniq = int(unique_counts.get(col, 0))
+        if uniq == 0 or uniq > max_unique:
+            continue
+
+        raw_values = categorical_samples.get(col, [])
+        cleaned: list[str] = []
+        for v in raw_values:
+            value = str(v).strip()
+            if not value:
+                continue
+            if len(value) > max_value_length:
+                continue
+            if len(value.split()) > max_word_count:
+                continue
+            cleaned.append(value)
+            if len(cleaned) >= max_values:
+                break
+
+        if not cleaned:
+            continue
+
+        lines.append(f"- `{col}`: {', '.join(cleaned)}")
+        shown_cols += 1
+        if shown_cols >= 4:
+            break
+
+    if not lines:
+        return "_No compact subgroup values to display._"
+
+    return "\n".join(lines)
+
 
 
