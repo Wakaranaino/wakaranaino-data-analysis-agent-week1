@@ -223,6 +223,25 @@ css = """
     min-width: 110px !important;
     border-radius: 14px !important;
 }
+#code-output-wrap {
+    position: relative;
+}
+#code-output-wrap #edit-run-btn {
+    position: absolute !important;
+    top: 8px;
+    right: 10px;
+    z-index: 20;
+    height: 24px !important;
+    min-height: 24px !important;
+    width: 92px !important;
+    min-width: 92px !important;
+    max-width: 92px !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    line-height: 24px !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+}
 #explain-code-btn {
     width: 145px !important;
     min-width: 145px !important;
@@ -508,15 +527,14 @@ with gr.Blocks(css=css, js=custom_js) as demo:
 
     with gr.Row(elem_classes="code-row"):
         with gr.Column():
-            code_output = gr.Code(
-                label="Generated Python Code",
-                language="python",
-                lines=12,
-                interactive=False,
-                elem_id="code-output"
-            )
-
-            with gr.Row(elem_classes="panel-action-row"):
+            with gr.Group(elem_id="code-output-wrap"):
+                code_output = gr.Code(
+                    label="Generated Python Code",
+                    language="python",
+                    lines=12,
+                    interactive=False,
+                    elem_id="code-output"
+                )
                 edit_run_btn = gr.Button(
                     "Edit",
                     variant="secondary",
