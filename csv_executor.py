@@ -390,7 +390,26 @@ def _csv_prompt_needs_stat_test(prompt: str) -> bool:
 
 
 def _validate_csv_execution_result(prompt: str, execution_output: str) -> tuple[bool, str]:
+    prompt_lower = (prompt or "").lower()
     text = (execution_output or "").lower()
+
+    # Global no-value guard: any analysis output that clearly indicates no usable values.
+    no_value_hints = [
+        "empty dataframe",
+        "empty data frame",
+        "no rows",
+        "no data",
+        "0 rows",
+        "no valid observations",
+        "all nan",
+        "all values are nan",
+        "count    0.0",
+        "count 0.0",
+    ]
+    if any(hint in text for hint in no_value_hints):
+        return False, (
+            "Execution output indicates no usable values for analysis."
+        )
 
     if _csv_prompt_needs_stat_test(prompt):
         has_test_hint = any(k in text for k in ["t-test", "ttest", "t-stat", "t statistic", "p-value", "p value"])
@@ -399,6 +418,14 @@ def _validate_csv_execution_result(prompt: str, execution_output: str) -> tuple[
                 "Statistical output contains NaN. Ensure subgroup filtering returns non-empty numeric groups, "
                 "normalize category labels, and rerun the test."
             )
+
+    # If prompt requests an analysis result, "nothing printed" should not be treated as success.
+    analysis_intents = [
+        "analy", "stat", "compare", "plot", "chart", "graph", "test", "mean", "median",
+        "std", "distribution", "correlation", "regression", "histogram", "summary"
+    ]
+    if "nothing was printed" in text and any(k in prompt_lower for k in analysis_intents):
+        return False, "Analysis request returned no printed values."
 
     return True, ""
 
@@ -488,6 +515,7 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             None,
             updated_history
         )
+
 
 
 
