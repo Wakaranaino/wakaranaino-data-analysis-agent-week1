@@ -270,7 +270,7 @@ css = """
     min-height: 0 !important;
 }
 .right-pane {
-    padding-top: 8px !important;
+    padding-top: 6px !important;
 }
 .left-pane textarea,
 .right-pane textarea,
@@ -390,13 +390,13 @@ css = """
     background: transparent !important;
     box-shadow: none !important;
     padding: 0 !important;
-    margin-top: -1px !important;
+    margin-top: -3px !important;
 }
 #history-header-row {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin: 0 0 2px 0 !important;
+    margin: 0 !important;
     gap: 8px !important;
     background: transparent !important;
     border: none !important;
