@@ -382,6 +382,27 @@ def _prepare_csv_execution_artifacts(result: dict[str, Any]) -> tuple[str, Any]:
     return execution_output, img
 
 
+def _csv_prompt_needs_stat_test(prompt: str) -> bool:
+    prompt_lower = (prompt or "").lower()
+    return any(k in prompt_lower for k in [
+        "t-test", "ttest", "anova", "hypothesis", "p-value", "significant"
+    ])
+
+
+def _validate_csv_execution_result(prompt: str, execution_output: str) -> tuple[bool, str]:
+    text = (execution_output or "").lower()
+
+    if _csv_prompt_needs_stat_test(prompt):
+        has_test_hint = any(k in text for k in ["t-test", "ttest", "t-stat", "t statistic", "p-value", "p value"])
+        if has_test_hint and "nan" in text:
+            return False, (
+                "Statistical output contains NaN. Ensure subgroup filtering returns non-empty numeric groups, "
+                "normalize category labels, and rerun the test."
+            )
+
+    return True, ""
+
+
 def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] | None):
     try:
         if history is None:
@@ -424,14 +445,19 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             result = _execute_csv_code_with_timeout(code, df, timeout=CSV_EXEC_TIMEOUT)
             if result.get("success"):
                 execution_output, img = _prepare_csv_execution_artifacts(result)
-                status = "Executed on CSV dataset"
-                interpretation = interpret_result(f"[FILE] {prompt}", code, execution_output, status, history=None)
-                updated_history = history + [{
-                    "user": prompt,
-                    "assistant": interpretation,
-                    "success": True
-                }]
-                return code, execution_output, status, _build_history_text(updated_history), img, updated_history
+                is_valid, validation_message = _validate_csv_execution_result(prompt, execution_output)
+                if is_valid:
+                    status = "Executed on CSV dataset" if attempt == 0 else f"Fixed and executed on CSV retry (attempt {attempt})"
+                    interpretation = interpret_result(f"[FILE] {prompt}", code, execution_output, status, history=None)
+                    updated_history = history + [{
+                        "user": prompt,
+                        "assistant": interpretation,
+                        "success": True
+                    }]
+                    return code, execution_output, status, _build_history_text(updated_history), img, updated_history
+
+                last_error = f"Post-execution validation failed: {validation_message}"
+                continue
 
             last_error = result.get("error") or "Unknown execution error."
 
@@ -462,3 +488,4 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             None,
             updated_history
         )
+
