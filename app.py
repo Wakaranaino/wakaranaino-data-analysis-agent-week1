@@ -4,6 +4,21 @@ from llm import explain_code
 from csv_ui import handle_csv_upload, handle_clear_csv
 from csv_executor import clear_dataset_session, run_csv_agent
 
+import requests
+from PIL import Image
+import PIL
+
+print("VERSIONS_EXTRA:",
+      "Pillow", PIL.__version__,
+      "requests", requests.__version__)
+
+try:
+    import yfinance as yf
+    print("VERSIONS_EXTRA:", "yfinance", yf.__version__)
+except Exception as e:
+    print("VERSIONS_EXTRA: yfinance import failed:", repr(e))
+
+
 
 EXAMPLE_PROMPTS = {
     "AAPL Trend": "Plot AAPL closing prices for the last 100 days",
