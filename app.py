@@ -115,29 +115,29 @@ function () {
 
 css = """
 :root {
-    --ui-bg: #f6f7f9;
+    --ui-bg: #f8f9fb;
     --ui-card: #ffffff;
     --ui-border: #e5e7eb;
+    --ui-text: #111827;
     --ui-muted: #6b7280;
-    --ui-title: #111827;
     --ui-accent: #ea7a33;
 }
 .gradio-container {
-    max-width: 1200px !important;
+    max-width: 1240px !important;
     margin: 0 auto !important;
-    padding: 10px 12px 18px !important;
+    padding: 10px 14px 18px !important;
     background: var(--ui-bg) !important;
 }
 .gradio-container h1 {
-    color: var(--ui-title) !important;
-    font-size: 52px !important;
-    line-height: 1.05 !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 2px !important;
+    font-size: 42px !important;
+    line-height: 1.1 !important;
     letter-spacing: -0.02em !important;
+    color: var(--ui-text) !important;
 }
 .app-subtitle p {
     margin: 0 0 10px 0 !important;
-    font-size: 16px !important;
+    font-size: 14px !important;
     color: var(--ui-muted) !important;
 }
 .top-row {
@@ -151,28 +151,35 @@ css = """
     border-radius: 12px !important;
     padding: 10px !important;
 }
+.left-pane textarea,
+.right-pane textarea,
+#execution-output textarea,
+#code-explanation textarea,
+#run-status textarea {
+    border-radius: 10px !important;
+}
 .example-row {
     gap: 8px !important;
-    margin-top: -6px !important;
+    margin-top: -4px !important;
     margin-bottom: 8px !important;
     flex-wrap: wrap !important;
 }
 .example-row button {
     min-width: unset !important;
     width: auto !important;
-    min-height: 34px !important;
-    height: 34px !important;
-    padding: 0 14px !important;
-    font-size: 14px !important;
-    border-radius: 18px !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    border-radius: 999px !important;
     border: 1px solid var(--ui-border) !important;
     background: #f3f4f6 !important;
-    color: #1f2937 !important;
+    color: #273244 !important;
     flex: 0 0 auto !important;
 }
 .action-row {
-    margin-top: -2px !important;
-    gap: 10px !important;
+    margin-top: -1px !important;
+    gap: 8px !important;
     flex-wrap: nowrap !important;
 }
 .action-row > * {
@@ -181,8 +188,8 @@ css = """
 }
 .action-row button,
 .action-row .gr-button {
-    min-height: 42px !important;
-    border-radius: 12px !important;
+    min-height: 40px !important;
+    border-radius: 10px !important;
     font-weight: 600 !important;
 }
 .action-row button.primary {
@@ -217,12 +224,9 @@ css = """
 }
 #history-wrap {
     position: relative;
-    background: transparent !important;
-    border: 0 !important;
 }
 #history-textbox textarea {
     overflow-y: scroll !important;
-    border-radius: 10px !important;
 }
 .history-panel-title {
     font-size: 15px !important;
@@ -232,17 +236,17 @@ css = """
 }
 #history-wrap #clear-history-btn {
     position: absolute !important;
-    top: 7px;
-    right: 14px;
+    top: 8px;
+    right: 10px;
     z-index: 20;
-    height: 24px !important;
-    min-height: 24px !important;
-    width: 78px !important;
-    min-width: 78px !important;
-    max-width: 78px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    width: 74px !important;
+    min-width: 74px !important;
+    max-width: 74px !important;
     padding: 0 !important;
-    font-size: 13px !important;
-    line-height: 24px !important;
+    font-size: 12px !important;
+    line-height: 22px !important;
     font-weight: 600 !important;
     border-radius: 12px !important;
 }
@@ -259,11 +263,6 @@ css = """
     background: var(--ui-card) !important;
     border: 1px solid var(--ui-border) !important;
     border-radius: 12px !important;
-}
-#execution-output textarea,
-#code-explanation textarea,
-#run-status textarea {
-    border-radius: 10px !important;
 }
 .csv-summary-panel {
     background: linear-gradient(180deg, rgba(160, 192, 148, 0.07), rgba(255, 255, 255, 0.02)) !important;
@@ -357,18 +356,18 @@ css = """
     border: 1px solid var(--ui-border) !important;
     border-radius: 12px !important;
     background: #ffffff !important;
-    padding: 8px !important;
+    padding: 6px !important;
 }
 #csv-upload .file-preview,
 #csv-upload .file-preview-holder {
     min-height: 0 !important;
 }
 #csv-upload .file-drop {
-    min-height: 64px !important;
-    padding: 8px 8px !important;
+    min-height: 60px !important;
+    padding: 6px 8px !important;
 }
 #csv-upload .file-drop .file-drop-text {
-    font-size: 13px !important;
+    font-size: 12px !important;
     line-height: 1.1 !important;
 }
 """
@@ -386,8 +385,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             prompt = gr.Textbox(
                 label="Prompt",
                 lines=3,
-                placeholder="Try: Plot AAPL closing prices for the last 100 days",
-                elem_id="prompt-input"
+                placeholder="Try: Plot AAPL closing prices for the last 100 days"
             )
 
             with gr.Row(elem_classes="example-row"):
