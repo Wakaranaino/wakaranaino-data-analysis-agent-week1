@@ -316,7 +316,7 @@ css = """
 #plot-output,
 #execution-output {
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 500px !important;
     max-height: none !important;
 }
 #prompt-input textarea {
@@ -327,18 +327,18 @@ css = """
 }
 #execution-output textarea,
 #code-explanation textarea {
-    height: 350px !important;
-    min-height: 350px !important;
-    max-height: 350px !important;
+    height: 430px !important;
+    min-height: 430px !important;
+    max-height: 430px !important;
     overflow-y: auto !important;
 }
 #code-output pre,
 #code-output textarea,
 #code-output .cm-editor,
 #code-output .cm-scroller {
-    height: 350px !important;
-    min-height: 350px !important;
-    max-height: 350px !important;
+    height: 430px !important;
+    min-height: 430px !important;
+    max-height: 430px !important;
     overflow: auto !important;
 }
 .csv-summary-panel {
