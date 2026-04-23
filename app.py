@@ -405,7 +405,7 @@ css = """
     box-shadow: none !important;
     padding: 0 !important;
 }
-.history-header-row {
+#history-header-row {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -463,13 +463,15 @@ css = """
     padding: 2px 2px 0 2px;
 }
 .history-panel-title {
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    color: #6b7280 !important;
     margin: 0 !important;
 }
-.history-panel-title p {
+#history-title-text {
     margin: 0 !important;
+    padding: 0 !important;
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+    font-weight: 600 !important;
+    color: #6b7280 !important;
 }
 #history-wrap #clear-history-btn {
     height: 22px !important;
@@ -497,6 +499,14 @@ css = """
     border: 1px solid #e4e8f0 !important;
     border-radius: 14px !important;
     box-shadow: none !important;
+}
+#execution-output > .wrap,
+#code-output > .wrap,
+#code-explanation > .wrap,
+#run-status > .wrap {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
 }
 #plot-output,
 #execution-output {
@@ -685,9 +695,9 @@ with gr.Blocks(css=css, js=custom_js) as demo:
             gr.Markdown("Click Upload CSV to select a file", elem_id="csv-upload-hint")
 
         with gr.Column(elem_classes="right-pane"):
-            with gr.Group(elem_id="history-wrap"):
-                with gr.Row(elem_classes="history-header-row"):
-                    gr.Markdown("Conversation History", elem_classes="history-panel-title")
+            with gr.Column(elem_id="history-wrap"):
+                with gr.Row(elem_id="history-header-row"):
+                    gr.HTML("<div id='history-title-text'>Conversation History</div>", elem_classes="history-panel-title")
                     new_chat_btn = gr.Button(
                         "Clear",
                         variant="secondary",
