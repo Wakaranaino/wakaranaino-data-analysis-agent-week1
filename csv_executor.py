@@ -10,7 +10,7 @@ from typing import Any, Optional
 import pandas as pd
 from PIL import Image
 
-from llm import generate_csv_code, repair_csv_code, interpret_result
+from llm import generate_csv_code, repair_csv_code, interpret_csv_result
 
 
 MAX_PREVIEW_ROWS = 5
@@ -389,8 +389,38 @@ def _csv_prompt_needs_stat_test(prompt: str) -> bool:
     ])
 
 
+def _csv_prompt_needs_subgroup(prompt: str) -> bool:
+    prompt_lower = (prompt or "").lower()
+    subgroup_keywords = [
+        " subgroup", "group ", "classification", "class ", "between ", "vs ", "versus "
+    ]
+    return any(k in prompt_lower for k in subgroup_keywords)
+
+
+def _csv_prompt_is_underspecified(prompt: str) -> bool:
+    prompt_lower = (prompt or "").lower()
+    has_quoted_column = ("'" in prompt_lower) or ('"' in prompt_lower)
+    broad_terms = ["analyze", "analysis", "scores", "metrics", "compare", "summary", "statistics"]
+    return (not has_quoted_column) and any(t in prompt_lower for t in broad_terms)
+
+
 def _validate_csv_execution_result(prompt: str, execution_output: str) -> tuple[bool, str]:
     text = (execution_output or "").lower()
+
+    if _csv_prompt_needs_subgroup(prompt):
+        empty_hints = [
+            "size: 0",
+            "n=0",
+            "empty",
+            "no rows",
+            "no data",
+            "one group is empty",
+            "both groups are empty",
+        ]
+        if any(h in text for h in empty_hints):
+            return False, (
+                "Subgroup output indicates empty groups. Normalize category labels and ensure selected groups contain rows."
+            )
 
     if _csv_prompt_needs_stat_test(prompt):
         has_test_hint = any(k in text for k in ["t-test", "ttest", "t-stat", "t statistic", "p-value", "p value"])
@@ -398,6 +428,14 @@ def _validate_csv_execution_result(prompt: str, execution_output: str) -> tuple[
             return False, (
                 "Statistical output contains NaN. Ensure subgroup filtering returns non-empty numeric groups, "
                 "normalize category labels, and rerun the test."
+            )
+
+    if _csv_prompt_is_underspecified(prompt):
+        has_assumptions = "assumptions used" in text
+        if not has_assumptions:
+            return False, (
+                "Prompt is underspecified but execution output does not report inferred assumptions. "
+                "Print a short 'Assumptions Used' section."
             )
 
     return True, ""
@@ -448,7 +486,7 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
                 is_valid, validation_message = _validate_csv_execution_result(prompt, execution_output)
                 if is_valid:
                     status = "Executed on CSV dataset" if attempt == 0 else f"Fixed and executed on CSV retry (attempt {attempt})"
-                    interpretation = interpret_result(f"[FILE] {prompt}", code, execution_output, status, history=None)
+                    interpretation = interpret_csv_result(prompt, execution_output, status)
                     updated_history = history + [{
                         "user": prompt,
                         "assistant": interpretation,
@@ -488,4 +526,5 @@ def run_csv_agent(prompt: str, history: list | None, csv_state: dict[str, Any] |
             None,
             updated_history
         )
+
 
