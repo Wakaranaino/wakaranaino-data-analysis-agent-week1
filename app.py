@@ -624,6 +624,9 @@ with gr.Blocks(css=css, js=custom_js) as demo:
                 columns=1,
                 object_fit="contain",
                 allow_preview=True,
+                preview=True,
+                show_download_button=True,
+                type="filepath",
                 elem_id="plot-output"
             )
 
@@ -769,7 +772,6 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.launch(ssr_mode=False)
-
 
 
 
