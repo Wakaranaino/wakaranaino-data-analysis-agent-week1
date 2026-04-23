@@ -25,25 +25,39 @@ def new_chat():
     return render_history_html([]), []
 
 
+def _escape_html(text):
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def render_history_html(history):
     if not history:
         return '<div class="history-empty">No conversation yet.</div>'
 
     parts = ['<div class="history-chat-wrap">']
-    for turn in history:
-        user_text = str(turn.get("user", "")).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        assistant_text = str(turn.get("assistant", "")).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    for turn in reversed(history):
+        user_text = _escape_html(turn.get("user", ""))
+        assistant_text = _escape_html(turn.get("assistant", ""))
+        system_note = _escape_html(turn.get("system_note", ""))
         user_text = user_text.replace("\n", "<br>")
         assistant_text = assistant_text.replace("\n", "<br>")
+        system_note = system_note.replace("\n", "<br>")
 
         parts.append(
             '<div class="history-row user-row">'
             f'<div class="history-bubble user-bubble">{user_text}</div>'
             "</div>"
         )
+        assistant_inner = assistant_text
+        if system_note.strip():
+            assistant_inner += (
+                '<div class="assistant-system-note">'
+                f"<span>System note:</span> {system_note}"
+                "</div>"
+            )
+
         parts.append(
             '<div class="history-row assistant-row">'
-            f'<div class="history-bubble assistant-bubble">{assistant_text}</div>'
+            f'<div class="history-bubble assistant-bubble">{assistant_inner}</div>'
             "</div>"
         )
     parts.append("</div>")
@@ -84,6 +98,8 @@ def run_agent_ui(prompt, history_state, csv_state):
         )
     else:
         code, execution_output, run_status, _, plot_output, updated_history = run_agent(prompt, history_state)
+    if updated_history:
+        updated_history = [*updated_history[:-1], {**updated_history[-1], "system_note": run_status}]
     history_html = render_history_html(updated_history)
     return (
         code,
@@ -118,6 +134,8 @@ def handle_edit_or_run(edit_mode, code, history_state):
         code=code,
         history_state=history_state
     )
+    if updated_history:
+        updated_history = [*updated_history[:-1], {**updated_history[-1], "system_note": run_status}]
     history_html = render_history_html(updated_history)
 
     return (
@@ -146,40 +164,6 @@ def handle_clear_csv_ui():
 
 custom_js = """
 function () {
-  function scrollHistoryToBottom() {
-    const box = document.querySelector('#history-textbox');
-    if (!box) return;
-    box.scrollTop = box.scrollHeight;
-  }
-
-  function scheduleHistoryScroll() {
-    scrollHistoryToBottom();
-    requestAnimationFrame(scrollHistoryToBottom);
-    setTimeout(scrollHistoryToBottom, 60);
-    setTimeout(scrollHistoryToBottom, 180);
-    setTimeout(scrollHistoryToBottom, 360);
-  }
-
-  function attachHistoryAutoScroll() {
-    const box = document.querySelector('#history-textbox');
-    if (!box) {
-      setTimeout(attachHistoryAutoScroll, 400);
-      return;
-    }
-    if (box.dataset.historyScrollBound === '1') {
-      scheduleHistoryScroll();
-      return;
-    }
-    box.dataset.historyScrollBound = '1';
-
-    const observer = new MutationObserver(() => {
-      scheduleHistoryScroll();
-    });
-    observer.observe(box, { childList: true, subtree: true, characterData: true });
-
-    scheduleHistoryScroll();
-  }
-
   function compactCsvUploadHint() {
     const root = document.querySelector('#csv-upload');
     if (!root) {
@@ -238,7 +222,6 @@ function () {
     observer.observe(root, { childList: true, subtree: true });
     compactCsvUploadHint();
   }
-  attachHistoryAutoScroll();
   watchCsvUpload();
 }
 """
@@ -285,6 +268,9 @@ css = """
     padding: 12px !important;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
     min-height: 0 !important;
+}
+.right-pane {
+    padding-top: 8px !important;
 }
 .left-pane textarea,
 .right-pane textarea,
@@ -404,12 +390,13 @@ css = """
     background: transparent !important;
     box-shadow: none !important;
     padding: 0 !important;
+    margin-top: -1px !important;
 }
 #history-header-row {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin: 0 0 4px 0 !important;
+    margin: 0 0 2px 0 !important;
     gap: 8px !important;
     background: transparent !important;
     border: none !important;
@@ -468,10 +455,21 @@ css = """
 #history-title-text {
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     line-height: 1.15 !important;
     font-weight: 500 !important;
     color: #6b7280 !important;
+}
+.assistant-system-note {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #e5e7eb;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #6b7280;
+}
+.assistant-system-note span {
+    font-weight: 600;
 }
 #history-wrap #clear-history-btn {
     height: 22px !important;
@@ -929,6 +927,7 @@ with gr.Blocks(css=css, js=custom_js) as demo:
     )
 
 demo.queue().launch(ssr_mode=False)
+
 
 
 
