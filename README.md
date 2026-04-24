@@ -154,3 +154,13 @@ Note:
   - structured CSV summary panel
   - manual code edit and rerun
   - code explanation panel
+ 
+## AI-Assisted Development
+AI tools were used as development assistants throughout this project under human supervision.
+
+- ChatGPT: used for project planning, architecture discussion, debugging, iterative code drafting, and design decisions.
+- Codex: used for larger code changes during later development stages, especially CSV feature expansion and UI refinement, after reviewing implementation plans first.
+- Claude: used occasionally for targeted troubleshooting on specific UI/Python issues and for drafting an initial version of the project report.
+- Verification Process: AI-generated code and writing were reviewed manually. Report content was cross-checked for accuracy, unsupported claims, and inconsistencies before final revision.
+
+All final decisions, integration steps, testing, and submissions were completed by the project author.
