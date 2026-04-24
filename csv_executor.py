@@ -16,7 +16,7 @@ from llm import generate_csv_code, repair_csv_code, interpret_result
 MAX_PREVIEW_ROWS = 5
 MAX_CATEGORY_UNIQUES = 20
 CSV_EXEC_TIMEOUT = 35
-CSV_MAX_ATTEMPTS = 2
+CSV_MAX_ATTEMPTS = 3
 
 
 @dataclass
