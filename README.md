@@ -72,31 +72,31 @@ flowchart TD
 ## Request Pipeline
 ```mermaid
 flowchart LR
-    A["Submit Prompt"] --> B["set_run_busy()\nSubmit->Cancel UI toggle"]
+    A["Submit Prompt"] --> B["set_run_busy()<br/>Submit -> Cancel UI toggle"]
     B --> C{"CSV session active?"}
 
     C -->|No| D["run_agent() in executor.py"]
     C -->|Yes| E["run_csv_agent() in csv_executor.py"]
 
-    D --> D1["Input validation\n(BLOCKED_RULES)"]
-    D1 --> D2["LLM code generation\n(simple/complex classifier)"]
+    D --> D1["Input validation<br/>(BLOCKED_RULES)"]
+    D1 --> D2["LLM code generation<br/>(simple/complex classifier)"]
     D2 --> D3["Code extraction + code-level checks"]
     D3 --> D4["Repair if needed"]
-    D4 --> D5["Execute in worker process\n(timeout=35s)"]
+    D4 --> D5["Execute in worker process<br/>(EXEC_TIMEOUT = 35s)"]
     D5 --> D6["Post-execution validation"]
-    D6 --> D7["Retry loop (MAX_ATTEMPTS=3)"]
+    D6 --> D7["Retry loop<br/>(MAX_ATTEMPTS = 3)"]
     D7 --> D8["Interpretation + history update"]
 
-    E --> E1["CSV session checks\n(prompt + active df)"]
-    E1 --> E2["LLM CSV code generation\n(with dataset summary context)"]
-    E2 --> E3["Execute with df injected\n(timeout=35s)"]
-    E3 --> E4["CSV post-validation\n(no-value / NaN-stat guards)"]
-    E4 --> E5["Retry loop (CSV_MAX_ATTEMPTS=2)"]
+    E --> E1["CSV session checks<br/>(prompt + active df)"]
+    E1 --> E2["LLM CSV code generation<br/>(with dataset summary context)"]
+    E2 --> E3["Execute with df injected<br/>(CSV_EXEC_TIMEOUT = 35s)"]
+    E3 --> E4["CSV post-validation<br/>(no-value / NaN-stat guards)"]
+    E4 --> E5["Retry loop<br/>(CSV_MAX_ATTEMPTS = 3)"]
     E5 --> E6["Interpretation + history update"]
 
-    D8 --> F["set_run_idle()\nCancel->Submit UI toggle"]
+    D8 --> F["set_run_idle()<br/>Cancel -> Submit UI toggle"]
     E6 --> F
-    F --> G["Render outputs\n(Gallery, code, execution output,\nrun status, conversation history HTML)"]
+    F --> G["Render outputs<br/>(Gallery, code, execution output,<br/>run status, conversation history HTML)"]
 
 ```
 
