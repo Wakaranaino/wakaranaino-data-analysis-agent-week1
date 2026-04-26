@@ -45,25 +45,28 @@ The goal is to provide a practical data-analysis agent with clear safeguards, re
 ## Architecture Diagram
 ```mermaid
 flowchart TD
-  U["User Input (Prompt / CSV Upload)"] --> APP["Gradio UI Layer (app.py)"]
-  APP --> R{"CSV Session Active?"}
-  R -->|No| EX["Prompt Executor (executor.py)"]
-  R -->|Yes| CSVEX["CSV Executor (csv_executor.py)"]
+    U["User (Gradio Web UI)"] --> APP["app.py\nUI + Event Orchestration + State"]
 
-  EX --> LLM["LLM Layer (llm.py)"]
-  CSVEX --> LLM
+    APP --> S1["State Objects\nhistory_state\ncsv_state\nedit_mode_state\nrun_in_progress"]
 
-  LLM --> GEN["Generate Code"]
-  GEN --> RUN["Execute in Worker Process\n(multiprocessing + timeout)"]
-  RUN --> VAL{"Validation Passed?"}
-  VAL -->|Yes| INT["Interpret Result (llm.py)"]
-  VAL -->|No| REP["Repair Code (llm.py)"]
-  REP --> RUN
+    APP --> ROUTER{"run_agent_ui()\nCSV active?"}
+    ROUTER -->|No| EXE["executor.py\nPrompt-Based Pipeline"]
+    ROUTER -->|Yes| CSVEXE["csv_executor.py\nCSV-Based Pipeline"]
 
-  INT --> UI["Render Panels\nCode / Output / Plot / History / Status"]
+    APP --> CSVUI["csv_ui.py\nUpload/Clear + Structured CSV Summary Panel"]
+    CSVUI --> CSVEXE
 
-  CSVUP["CSV UI Helpers (csv_ui.py)"] --> APP
-  CSVUP --> CSVEX
+    EXE --> LLM["llm.py\ngenerate_code / repair_code / interpret_result / explain_code"]
+    CSVEXE --> LLM
+
+    EXE --> SANDBOX1["Multiprocessing Execution Worker\n(Agg backend, timeout, temp plot files)"]
+    CSVEXE --> SANDBOX2["CSV Execution Worker\n(df injected, timeout, temp plot files)"]
+
+    SANDBOX1 --> OUT["Outputs to UI\nCode, Plot Gallery, Execution Output,\nRun Status, History HTML, Code Explanation"]
+    SANDBOX2 --> OUT
+    OUT --> APP
+    APP --> U
+
 ```
 
 ## Repository Structure
